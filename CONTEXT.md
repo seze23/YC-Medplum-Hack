@@ -1,9 +1,7 @@
-# CONTEXT.md
-
 # Relay
 ## Autonomous Patient Operations Platform
 
-Version: 1.0
+Version: 1.1
 
 ---
 
@@ -159,6 +157,10 @@ Inbound Phone Call
 
 ↓
 
+Twilio Voice (carrier)
+
+↓
+
 Pipecat
 
 ↓
@@ -195,11 +197,59 @@ STEDI
 
 ↓
 
-SMS
+AgentPhone (SMS / iMessage)
 
 ↓
 
 Dashboard
+
+Outbound follow-up calls re-enter this same chain at Twilio Voice → Pipecat, rather than running a separate path.
+
+---
+
+# Transport Layer
+
+Added in v1.1. The v1.0 architecture named Pipecat and Deepgram but never specified how a call or message physically reaches the platform. Two vendors fill that gap, split by medium rather than by direction.
+
+## Why two vendors
+
+**Voice runs on Twilio.** Twilio Media Streams exposes raw audio over a WebSocket, so Deepgram keeps ownership of both STT and TTS exactly as designed. Voice requires no carrier registration, so it works immediately on a free trial.
+
+**Text runs on AgentPhone.** US carriers require A2P 10DLC registration for any application-sent SMS from a 10-digit number. Registration is not possible on a Twilio trial account, and takes 10–15 days after upgrading to paid. AgentPhone absorbs that compliance layer directly. Its voice product is intentionally unused — it returns transcribed text rather than raw audio, which would remove Deepgram from the loop entirely.
+
+Neither Twilio nor AgentPhone is a Sponsor Integration. Both are infrastructure and can be swapped without affecting sponsor commitments below.
+
+## Twilio Voice
+
+Responsibilities
+
+- carries all voice conversations, both inbound intake and outbound follow-up calls
+- delivers audio to Pipecat via `<Connect><Stream>` (Media Streams)
+- makes no decisions and runs no speech processing itself
+
+One voice implementation serves both directions of the Patient Journey — inbound calls and follow-up calls use the same TwiML and land in the same Pipecat pipeline.
+
+Constraints
+
+- Trial: 75 voice minutes, outbound restricted to pre-verified numbers in the signup country. Every demo phone must be verified in the Twilio console beforehand.
+- No BAA on trial or free tiers. Call audio is PHI. Synthetic patients only.
+
+## Call recording
+
+Recording is captured by buffering audio already flowing through Pipecat and writing it locally — not via Twilio's recording add-on or any paid feature. The recording then feeds a Deepgram batch pass with diarization, producing the timestamps and speaker segmentation that streaming STT alone cannot provide. This satisfies the Deepgram responsibilities listed below without additional cost.
+
+## AgentPhone
+
+Responsibilities
+
+- sends SMS confirmations and reminders
+- receives inbound SMS/iMessage replies via webhook
+- owns A2P 10DLC compliance so Relay does not need to register a Twilio SMS campaign
+
+Constraints
+
+- Free tier: $5.00 credit total. Phone numbers cost $3.00/month each — provision exactly one. Call recording is a $5.00/month add-on and should not be enabled; recording is already handled in Pipecat at no cost.
+- No BAA. Message bodies may contain PHI. Synthetic patients only.
 
 ---
 
@@ -229,11 +279,11 @@ Speech infrastructure.
 
 Responsibilities
 
-- speech-to-text
-- text-to-speech
+- speech-to-text (live, streaming — drives the conversation turn)
+- text-to-speech (live, streaming — drives the reply)
 - streaming transcription
-- timestamps
-- speaker segmentation
+- timestamps (batch pass over the Pipecat-recorded call audio)
+- speaker segmentation (batch pass, diarized)
 
 ---
 
@@ -372,11 +422,11 @@ Appointment scheduling
 
 ↓
 
-SMS confirmation
+SMS confirmation (AgentPhone)
 
 ↓
 
-Reminder
+Reminder (AgentPhone)
 
 ↓
 
@@ -384,7 +434,7 @@ Appointment
 
 ↓
 
-Follow-up call
+Follow-up call (Twilio Voice → Pipecat, same pipeline as intake)
 
 ↓
 
@@ -615,4 +665,3 @@ This brief becomes the primary handoff artifact for clinicians and staff.
 Judges should conclude:
 
 "Relay behaves like an autonomous patient operations employee that continuously improves clinic efficiency while maintaining safe human oversight and creating high-quality structured healthcare data."
-
