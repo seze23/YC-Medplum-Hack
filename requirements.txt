@@ -1,0 +1,9 @@
+pipecat-ai[deepgram,anthropic,silero]
+fastapi
+uvicorn[standard]
+websockets
+python-dotenv
+twilio
+httpx
+anthropic
+pytest
