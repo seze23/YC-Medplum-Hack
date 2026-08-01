@@ -2,7 +2,7 @@
 
 The thesis is that the longitudinal record makes each conversation smarter. The
 obstacle is that a FHIR query mid-sentence stalls the agent and breaks the
-illusion. Retrieval has to land in single-digit milliseconds or the pause gives
+illusion — retrieval has to land in single-digit milliseconds or the pause gives
 it away.
 
 The payoff line on camera:
@@ -12,29 +12,80 @@ The payoff line on camera:
 
 said with no pause at all.
 
---- Status ---------------------------------------------------------------------
+--- Two backends, one interface -----------------------------------------------
 
-`MOSS_API_KEY` is unset and the Moss API surface is not wired yet. Until the
-docs land, this module runs a local in-memory index that hits the same latency
-bar and demos identically. The public interface below (`index_patient`,
-`retrieve`) is what the Moss client will implement, so swapping it in is a
-change to this file only — no caller changes.
+`index_patient()` and `retrieve()` are the only entry points, and callers never
+learn which backend answered.
 
-Do not claim on camera that Moss is powering retrieval until the client is
-actually wired. The local path is a legitimate fallback; describing it as
-something it isn't is the kind of thing that unravels under a judge's follow-up.
+  Moss   — a real search runtime (Rust/WASM). `SessionIndex.query` runs entirely
+           in memory, no cloud round trip, ~1-10ms. Requires MOSS_PROJECT_ID and
+           MOSS_PROJECT_KEY; it authenticates even for local session indexes.
+
+  Local  — a keyword-scored fallback over the same flattened facts. Same shape,
+           same latency profile, no dependencies. Used when Moss credentials are
+           absent or the SDK errors.
+
+If Moss is not active, do not say on camera that Moss is powering retrieval.
+`backend_name()` reports which one actually answered — use it rather than
+assuming.
 """
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from loguru import logger
 
-from shared.config import MOSS_API_KEY
+from shared.config import MOSS_PROJECT_ID, MOSS_PROJECT_KEY
 
-# patient_id -> list of short, speakable context strings.
-_INDEX: dict[str, list[str]] = {}
+# patient_id -> list of short, speakable context strings. Also the source of
+# truth for the Moss path, so both backends index identical text.
+_FACTS: dict[str, list[str]] = {}
+
+# patient_id -> Moss SessionIndex
+_SESSIONS: dict[str, Any] = {}
+
+_client: Any = None
+_moss_available: bool | None = None
+_last_query_ms: float | None = None
+
+
+def _moss_client() -> Any:
+    """Construct the client once. Returns None when Moss is not configured."""
+    global _client, _moss_available
+
+    if _moss_available is False:
+        return None
+    if _client is not None:
+        return _client
+
+    if not (MOSS_PROJECT_ID and MOSS_PROJECT_KEY):
+        _moss_available = False
+        logger.info("Moss not configured — using local retrieval index.")
+        return None
+
+    try:
+        from moss import MossClient
+
+        _client = MossClient(MOSS_PROJECT_ID, MOSS_PROJECT_KEY)
+        _moss_available = True
+        logger.info("Moss client ready.")
+        return _client
+    except Exception as exc:  # noqa: BLE001
+        _moss_available = False
+        logger.warning(f"Moss unavailable ({type(exc).__name__}: {exc}) — local index.")
+        return None
+
+
+def backend_name() -> str:
+    """'moss' or 'local'. Say the true one out loud."""
+    return "moss" if _moss_available else "local"
+
+
+def last_query_ms() -> float | None:
+    """Latency of the most recent retrieval. Worth showing when it is genuinely low."""
+    return _last_query_ms
 
 
 async def index_patient(patient_id: str, history: dict[str, Any]) -> None:
@@ -67,18 +118,59 @@ async def index_patient(patient_id: str, history: dict[str, Any]) -> None:
     if cancelled:
         facts.append(f"Cancellation history: {cancelled} cancelled appointment(s).")
 
-    _INDEX[patient_id] = facts
-    logger.info(f"Indexed {len(facts)} facts for patient {patient_id}")
+    _FACTS[patient_id] = facts
+
+    client = _moss_client()
+    if client is not None and facts:
+        try:
+            session = await client.session(f"patient-{patient_id}")
+            session.add_docs(
+                [{"id": str(i), "text": fact} for i, fact in enumerate(facts)]
+            )
+            _SESSIONS[patient_id] = session
+            logger.info(f"Moss indexed {len(facts)} facts for patient {patient_id}")
+            return
+        except Exception as exc:  # noqa: BLE001 - never break a call over retrieval
+            logger.warning(f"Moss indexing failed ({exc}) — local index for this call.")
+
+    logger.info(f"Indexed {len(facts)} facts for patient {patient_id} (local)")
 
 
 async def retrieve(patient_id: str, *, query: str, limit: int = 3) -> list[str]:
     """Top facts for this moment in the conversation. Must be fast."""
-    if MOSS_API_KEY:
-        # TODO: real Moss client goes here once the API surface is known.
-        # Keep the same signature so nothing upstream changes.
-        pass
+    global _last_query_ms
 
-    facts = _INDEX.get(patient_id, [])
+    session = _SESSIONS.get(patient_id)
+    if session is not None:
+        try:
+            started = time.perf_counter()
+            result = session.query(query, _query_options(limit))
+            _last_query_ms = (time.perf_counter() - started) * 1000
+            hits = [doc.text for doc in getattr(result, "docs", [])]
+            logger.debug(f"Moss retrieval {_last_query_ms:.1f}ms, {len(hits)} hits")
+            if hits:
+                return hits[:limit]
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"Moss query failed ({exc}) — falling back to local.")
+
+    started = time.perf_counter()
+    hits = _local_retrieve(patient_id, query, limit)
+    _last_query_ms = (time.perf_counter() - started) * 1000
+    return hits
+
+
+def _query_options(limit: int) -> Any:
+    try:
+        from moss import QueryOptions
+
+        return QueryOptions(top_k=limit)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _local_retrieve(patient_id: str, query: str, limit: int) -> list[str]:
+    """Keyword overlap. Crude, deterministic, and effectively instant."""
+    facts = _FACTS.get(patient_id, [])
     if not facts:
         return []
 
@@ -86,16 +178,14 @@ async def retrieve(patient_id: str, *, query: str, limit: int = 3) -> list[str]:
     if not terms:
         return facts[:limit]
 
-    scored = sorted(
-        facts,
-        key=lambda fact: -sum(1 for t in terms if t in fact.lower()),
-    )
+    scored = sorted(facts, key=lambda fact: -sum(1 for t in terms if t in fact.lower()))
     return scored[:limit]
 
 
 def clear() -> None:
     """Reset between demo takes."""
-    _INDEX.clear()
+    _FACTS.clear()
+    _SESSIONS.clear()
 
 
 def _clinical_status(condition: dict[str, Any]) -> str:

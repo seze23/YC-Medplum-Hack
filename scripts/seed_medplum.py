@@ -178,8 +178,18 @@ async def seed(client: MedplumClient) -> None:
                     "display": "ambulatory",
                 },
                 "subject": {"reference": f"Patient/{maria['id']}"},
+                # `display` matters as much as the reference here. Retrieval
+                # flattens this Encounter into a one-line fact, and without a
+                # name that line reads "seen for right shoulder impingement"
+                # instead of "seen for right shoulder impingement by Dr. Sarah
+                # Chen" — which is the whole point of surfacing it mid-call.
                 "participant": [
-                    {"individual": {"reference": f"Practitioner/{chen['id']}"}}
+                    {
+                        "individual": {
+                            "reference": f"Practitioner/{chen['id']}",
+                            "display": "Dr. Sarah Chen",
+                        }
+                    }
                 ],
                 "reasonCode": [{"text": "right shoulder impingement"}],
                 "period": {

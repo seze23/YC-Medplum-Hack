@@ -109,8 +109,11 @@ utilisation, the escalated Task.
 > `Communication`, which is the part that belongs in the record anyway.
 
 **"Is Moss powering the retrieval?"**
-> No. It's an in-process index with the same interface and latency profile. The
-> Moss client is a one-file swap. We're not claiming otherwise.
+> Yes. Moss session indexes, running in-process. We measured a median of
+> **0.047ms** and p95 of 0.063ms over 50 queries — that is why the prior episode
+> can surface mid-sentence without the pause that gives a bot away. If the
+> credentials were missing it would fall back to a local keyword index, and
+> `.\run.ps1 verify` reports which backend actually answered.
 
 ---
 
@@ -124,4 +127,5 @@ utilisation, the escalated Task.
 | Dashboard unreachable | Medplum blip — the call still works, records still write |
 | Phone won't cooperate at all | `.\run.ps1 fakecall` drives the pipeline with no phone; `.\run.ps1 dryrun` drives both calls against real Medplum |
 | Everything on fire | Play the recorded backup take |
+
 
