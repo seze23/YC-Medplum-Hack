@@ -322,6 +322,40 @@ def test_name_only_match_raises_a_review_flag_and_still_books():
     assert orch.booked_appointment_id is not None
 
 
+def test_unconfirmed_coverage_raises_a_billing_task_and_still_books():
+    """A walk-in whose insurance we cannot verify.
+
+    The agent tells them billing will follow up, so a Task has to actually
+    exist — otherwise the promise is empty and the patient arrives against an
+    unverified claim. It must still book: a clinic would.
+    """
+
+    def _no_coverage(payload):
+        from services.stedi import Eligibility
+
+        return Eligibility(covered=False, raw={})
+
+    fake = FakeMedplum(existing_patient=False)
+
+    async def run():
+        import services.stedi as stedi_mod
+
+        original = stedi_mod.parse
+        stedi_mod.parse = _no_coverage
+        try:
+            orch, state = await _drive_happy_path(fake)
+            return orch, state
+        finally:
+            stedi_mod.parse = original
+
+    orch, state = asyncio.run(run())
+
+    assert any(f.startswith("BILLING") for f in state.review_flags)
+    assert orch.booked_appointment_id is not None
+    tasks = [b for k, b in fake.writes if k == "Task"]
+    assert any("BILLING" in t["description"] for t in tasks)
+
+
 def test_a_failing_service_flags_but_does_not_kill_the_call():
     """A Medplum blip must not take down a live call."""
 

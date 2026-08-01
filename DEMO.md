@@ -109,11 +109,15 @@ utilisation, the escalated Task.
 > `Communication`, which is the part that belongs in the record anyway.
 
 **"Is Moss powering the retrieval?"**
-> Yes. Moss session indexes, running in-process. We measured a median of
-> **0.047ms** and p95 of 0.063ms over 50 queries — that is why the prior episode
-> can surface mid-sentence without the pause that gives a bot away. If the
-> credentials were missing it would fall back to a local keyword index, and
-> `.\run.ps1 verify` reports which backend actually answered.
+> Yes. Moss session indexes, running in-process. Median **4.8ms**, p95 7.8ms
+> over 50 queries — genuinely sub-10ms, which is why the prior episode surfaces
+> mid-sentence without the pause that gives a bot away. And it is real semantic
+> search, not keyword matching: "which therapist treated me" returns the
+> Dr. Chen encounter despite sharing no words with it.
+>
+> If the credentials were missing it would fall back to a local keyword index.
+> `.\run.ps1 verify` reports which backend actually answered, so we are never
+> guessing about that.
 
 ---
 
@@ -127,5 +131,6 @@ utilisation, the escalated Task.
 | Dashboard unreachable | Medplum blip — the call still works, records still write |
 | Phone won't cooperate at all | `.\run.ps1 fakecall` drives the pipeline with no phone; `.\run.ps1 dryrun` drives both calls against real Medplum |
 | Everything on fire | Play the recorded backup take |
+
 
 

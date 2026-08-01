@@ -232,7 +232,7 @@ What is real, and what is not:
 | Medplum write-back | **Working.** Real appointments, real resources. |
 | Stedi eligibility | **Working.** Correct endpoint and auth; genuine X12 271 responses. Replays a captured real response during the demo so a mis-heard member ID cannot break the flow. |
 | SMS confirmation | **Blocked.** Code works; US carriers reject unregistered A2P 10DLC traffic (error 30034). Registration takes days. |
-| Moss retrieval | **Working.** Live session index. Measured median **0.047ms**, p95 0.063ms over 50 queries — retrieval lands mid-sentence with no perceptible pause. Falls back to a local keyword index if credentials are absent. |
+| Moss retrieval | **Working.** Live session index. Measured median **4.8ms**, p95 7.8ms over 50 queries — genuinely sub-10ms, so the prior episode lands mid-sentence with no perceptible pause. Falls back to a local keyword index if credentials are absent. |
 
 Nothing here was trained today. The scoring function is hand-written, and it is
 described as a reward function precisely because that is what it would become.
@@ -247,4 +247,5 @@ described as a reward function precisely because that is what it would become.
 - No-show prediction feeding the urgency term
 - Travel time and clinic utilisation as scoring signals
 - Learned policy over the scoring weights, once there is call volume
+
 

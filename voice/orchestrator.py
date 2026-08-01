@@ -189,6 +189,17 @@ class CallOrchestrator:
         state.insurance.referral_valid_through = result.referral_valid_through
         logger.info(f"Eligibility: {result.spoken()}")
 
+        if not result.covered:
+            # The agent tells the caller "I'll flag it for our billing team".
+            # Without this the system quietly did not, and the patient arrives
+            # to an unverified claim. An agent that promises something the
+            # system does not do is worse than one that says nothing.
+            state.review_flags.append(
+                f"BILLING: coverage not confirmed for member "
+                f"{state.insurance.member_id or '(none given)'} "
+                f"({state.insurance.payer or 'unknown payer'}) — verify before the visit"
+            )
+
     # --- scheduling ---------------------------------------------------------
 
     async def _offer_slot(self, state: CallState) -> None:

@@ -49,6 +49,11 @@ _SESSIONS: dict[str, Any] = {}
 _client: Any = None
 _moss_available: bool | None = None
 _last_query_ms: float | None = None
+# Which backend answered the most recent retrieve. Tracked separately from
+# _moss_available on purpose: a constructed client says nothing about whether
+# indexing succeeded, and reporting "moss" because a client exists is how you
+# end up claiming a latency number that came from the fallback.
+_last_backend: str = "none"
 
 
 def _moss_client() -> Any:
@@ -79,8 +84,11 @@ def _moss_client() -> Any:
 
 
 def backend_name() -> str:
-    """'moss' or 'local'. Say the true one out loud."""
-    return "moss" if _moss_available else "local"
+    """Which backend actually answered the last retrieve: 'moss' or 'local'.
+
+    Reports what happened, not what was configured. Say this one out loud.
+    """
+    return _last_backend
 
 
 def last_query_ms() -> float | None:
@@ -124,8 +132,23 @@ async def index_patient(patient_id: str, history: dict[str, Any]) -> None:
     if client is not None and facts:
         try:
             session = await client.session(f"patient-{patient_id}")
-            session.add_docs(
-                [{"id": str(i), "text": fact} for i, fact in enumerate(facts)]
+            # Every SessionIndex method is a coroutine, despite type hints that
+            # say otherwise. Calling them without await returns a coroutine
+            # object, which quietly has no `.docs` — so retrieval fell through
+            # to the local index while still reporting backend="moss". The only
+            # visible symptom was a suspiciously fast query time.
+            from moss import DocumentInfo
+
+            # DocumentInfo objects, not dicts — the Rust core rejects a plain
+            # dict with "argument 'docs': 'dict' object is not an instance of
+            # 'DocumentInfo'". That exception was being swallowed by the
+            # fallback below, so retrieval ran on the local index while still
+            # reporting backend="moss".
+            await session.add_docs(
+                [
+                    DocumentInfo(id=str(i), text=fact)
+                    for i, fact in enumerate(facts)
+                ]
             )
             _SESSIONS[patient_id] = session
             logger.info(f"Moss indexed {len(facts)} facts for patient {patient_id}")
@@ -138,24 +161,28 @@ async def index_patient(patient_id: str, history: dict[str, Any]) -> None:
 
 async def retrieve(patient_id: str, *, query: str, limit: int = 3) -> list[str]:
     """Top facts for this moment in the conversation. Must be fast."""
-    global _last_query_ms
+    global _last_query_ms, _last_backend
 
     session = _SESSIONS.get(patient_id)
     if session is not None:
         try:
             started = time.perf_counter()
-            result = session.query(query, _query_options(limit))
-            _last_query_ms = (time.perf_counter() - started) * 1000
+            result = await session.query(query, _query_options(limit))
+            elapsed = (time.perf_counter() - started) * 1000
             hits = [doc.text for doc in getattr(result, "docs", [])]
-            logger.debug(f"Moss retrieval {_last_query_ms:.1f}ms, {len(hits)} hits")
             if hits:
+                _last_query_ms = elapsed
+                _last_backend = "moss"
+                logger.debug(f"Moss retrieval {elapsed:.2f}ms, {len(hits)} hits")
                 return hits[:limit]
+            logger.warning("Moss returned no hits — falling back to local.")
         except Exception as exc:  # noqa: BLE001
             logger.warning(f"Moss query failed ({exc}) — falling back to local.")
 
     started = time.perf_counter()
     hits = _local_retrieve(patient_id, query, limit)
     _last_query_ms = (time.perf_counter() - started) * 1000
+    _last_backend = "local"
     return hits
 
 
