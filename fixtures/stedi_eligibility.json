@@ -1,0 +1,1184 @@
+{
+  "meta": {
+    "senderId": "STEDI",
+    "submitterId": "117151744",
+    "applicationMode": "test",
+    "traceId": "01KYZS83TKQZAHAT1GNEBZGG8E",
+    "outboundTraceId": "01KYZS83TKQZAHAT1GNEBZGG8E"
+  },
+  "controlNumber": "895742917",
+  "reassociationKey": "895742917",
+  "tradingPartnerServiceId": "87726",
+  "provider": {
+    "providerName": "Jerde - Sauer",
+    "entityIdentifier": "Provider",
+    "entityType": "Non-Person Entity",
+    "npi": "1999999984"
+  },
+  "subscriber": {
+    "memberId": "UHC202649",
+    "firstName": "John",
+    "lastName": "Doe",
+    "middleName": "A",
+    "gender": "M",
+    "entityIdentifier": "Insured or Subscriber",
+    "entityType": "Person",
+    "dateOfBirth": "19760214",
+    "groupNumber": "186084",
+    "planNumber": "UVdQAC5j6f",
+    "address": {
+      "address1": "123 Sunnyvale Lane",
+      "city": "Fosterburgh",
+      "state": "TX",
+      "postalCode": "91016"
+    }
+  },
+  "dependents": [
+    {
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "middleName": "Alex",
+      "gender": "F",
+      "entityType": "Person",
+      "dateOfBirth": "19521121",
+      "planNumber": "UVdQAC5j6f",
+      "relationToSubscriber": "Spouse",
+      "relationToSubscriberCode": "01",
+      "insuredIndicator": "N",
+      "maintenanceTypeCode": "001",
+      "maintenanceReasonCode": "25"
+    }
+  ],
+  "payer": {
+    "entityIdentifier": "Payer",
+    "entityType": "Non-Person Entity",
+    "name": "UNITEDHEALTHCARE",
+    "payorIdentification": "87726",
+    "contactInformation": {
+      "contacts": [
+        {
+          "communicationMode": "Uniform Resource Locator (URL)",
+          "communicationNumber": "WWW.UHCPROVIDER.COM"
+        }
+      ]
+    }
+  },
+  "planInformation": {
+    "planNumber": "UVdQAC5j6f",
+    "groupNumber": "186084"
+  },
+  "planDateInformation": {
+    "plan": "20240101-20241231"
+  },
+  "planStatus": [
+    {
+      "statusCode": "1",
+      "status": "Active Coverage",
+      "planDetails": "CHOICE PLUS",
+      "serviceTypeCodes": [
+        "30"
+      ]
+    },
+    {
+      "statusCode": "1",
+      "status": "Active Coverage",
+      "serviceTypeCodes": [
+        "A6"
+      ]
+    },
+    {
+      "statusCode": "1",
+      "status": "Active Coverage",
+      "serviceTypeCodes": [
+        "A6"
+      ]
+    },
+    {
+      "statusCode": "1",
+      "status": "Active Coverage",
+      "serviceTypeCodes": [
+        "A6"
+      ]
+    },
+    {
+      "statusCode": "1",
+      "status": "Active Coverage",
+      "serviceTypeCodes": [
+        "A6"
+      ]
+    }
+  ],
+  "benefitsInformation": [
+    {
+      "code": "1",
+      "name": "Active Coverage",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "insuranceTypeCode": "C1",
+      "insuranceType": "Commercial",
+      "planCoverage": "CHOICE PLUS",
+      "inPlanNetworkIndicatorCode": "W",
+      "inPlanNetworkIndicator": "Not Applicable",
+      "benefitsDateInformation": {
+        "dateOfLastUpdate": "20240731"
+      },
+      "benefitsRelatedEntity": {
+        "entityIdentifier": "Payer",
+        "entityType": "Non-Person Entity",
+        "entityName": "UNITEDHEALTHCARE",
+        "entityIdentification": "PI",
+        "entityIdentificationValue": "87726",
+        "address": {
+          "address1": "P.O. BOX 30555",
+          "city": "SALT LAKE CITY",
+          "state": "UT",
+          "postalCode": "841300555"
+        },
+        "contactInformation": {
+          "contacts": [
+            {
+              "communicationMode": "Uniform Resource Locator (URL)",
+              "communicationNumber": "WWW.UHCPROVIDER.COM"
+            }
+          ]
+        }
+      },
+      "benefitsRelatedEntities": [
+        {
+          "entityIdentifier": "Payer",
+          "entityType": "Non-Person Entity",
+          "entityName": "UNITEDHEALTHCARE",
+          "entityIdentification": "PI",
+          "entityIdentificationValue": "87726",
+          "address": {
+            "address1": "P.O. BOX 30555",
+            "city": "SALT LAKE CITY",
+            "state": "UT",
+            "postalCode": "841300555"
+          },
+          "contactInformation": {
+            "contacts": [
+              {
+                "communicationMode": "Uniform Resource Locator (URL)",
+                "communicationNumber": "WWW.UHCPROVIDER.COM"
+              }
+            ]
+          }
+        }
+      ],
+      "additionalInformation": [
+        {
+          "description": "PROVIDER IS OUT NETWORK FOR MEMBER"
+        },
+        {
+          "description": "FUNDING TYPE = SELF INSURED - LARGE GROUP"
+        }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "timeQualifierCode": "23",
+      "timeQualifier": "Calendar Year",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        },
+        {
+          "description": "DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "G",
+      "name": "Out of Pocket (Stop Loss)",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "insuranceTypeCode": "C1",
+      "insuranceType": "Commercial",
+      "timeQualifierCode": "23",
+      "timeQualifier": "Calendar Year",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        },
+        {
+          "description": "OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "timeQualifierCode": "24",
+      "timeQualifier": "Year to Date",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        },
+        {
+          "description": "DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "timeQualifierCode": "29",
+      "timeQualifier": "Remaining",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        },
+        {
+          "description": "DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "G",
+      "name": "Out of Pocket (Stop Loss)",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "insuranceTypeCode": "C1",
+      "insuranceType": "Commercial",
+      "timeQualifierCode": "24",
+      "timeQualifier": "Year to Date",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        },
+        {
+          "description": "OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "G",
+      "name": "Out of Pocket (Stop Loss)",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "insuranceTypeCode": "C1",
+      "insuranceType": "Commercial",
+      "timeQualifierCode": "29",
+      "timeQualifier": "Remaining",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        },
+        {
+          "description": "OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "timeQualifierCode": "24",
+      "timeQualifier": "Year to Date",
+      "benefitAmount": "3200",
+      "inPlanNetworkIndicatorCode": "W",
+      "inPlanNetworkIndicator": "Not Applicable",
+      "additionalInformation": [
+        {
+          "description": "DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "G",
+      "name": "Out of Pocket (Stop Loss)",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "insuranceTypeCode": "C1",
+      "insuranceType": "Commercial",
+      "timeQualifierCode": "24",
+      "timeQualifier": "Year to Date",
+      "benefitAmount": "5555.16",
+      "inPlanNetworkIndicatorCode": "W",
+      "inPlanNetworkIndicator": "Not Applicable",
+      "additionalInformation": [
+        {
+          "description": "OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "G",
+      "name": "Out of Pocket (Stop Loss)",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "insuranceTypeCode": "C1",
+      "insuranceType": "Commercial",
+      "timeQualifierCode": "23",
+      "timeQualifier": "Calendar Year",
+      "benefitAmount": "15500",
+      "inPlanNetworkIndicatorCode": "N",
+      "inPlanNetworkIndicator": "No",
+      "additionalInformation": [
+        {
+          "description": "OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "G",
+      "name": "Out of Pocket (Stop Loss)",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "insuranceTypeCode": "C1",
+      "insuranceType": "Commercial",
+      "timeQualifierCode": "23",
+      "timeQualifier": "Calendar Year",
+      "benefitAmount": "6850",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "timeQualifierCode": "23",
+      "timeQualifier": "Calendar Year",
+      "benefitAmount": "3200",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "timeQualifierCode": "29",
+      "timeQualifier": "Remaining",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "timeQualifierCode": "23",
+      "timeQualifier": "Calendar Year",
+      "benefitAmount": "5000",
+      "inPlanNetworkIndicatorCode": "N",
+      "inPlanNetworkIndicator": "No",
+      "additionalInformation": [
+        {
+          "description": "DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "G",
+      "name": "Out of Pocket (Stop Loss)",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "insuranceTypeCode": "C1",
+      "insuranceType": "Commercial",
+      "timeQualifierCode": "29",
+      "timeQualifier": "Remaining",
+      "benefitAmount": "1294.84",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "G",
+      "name": "Out of Pocket (Stop Loss)",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "insuranceTypeCode": "C1",
+      "insuranceType": "Commercial",
+      "timeQualifierCode": "29",
+      "timeQualifier": "Remaining",
+      "benefitAmount": "9944.84",
+      "inPlanNetworkIndicatorCode": "N",
+      "inPlanNetworkIndicator": "No",
+      "additionalInformation": [
+        {
+          "description": "OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "30"
+      ],
+      "serviceTypes": [
+        "Health Benefit Plan Coverage"
+      ],
+      "timeQualifierCode": "29",
+      "timeQualifier": "Remaining",
+      "benefitAmount": "1800",
+      "inPlanNetworkIndicatorCode": "N",
+      "inPlanNetworkIndicator": "No",
+      "additionalInformation": [
+        {
+          "description": "DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED"
+        }
+      ]
+    },
+    {
+      "code": "1",
+      "name": "Active Coverage",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        }
+      ]
+    },
+    {
+      "code": "1",
+      "name": "Active Coverage",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ABLETO FULLY FUNDED"
+        }
+      ]
+    },
+    {
+      "code": "1",
+      "name": "Active Coverage",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ABLETO PARTIALLY FUNDED"
+        }
+      ]
+    },
+    {
+      "code": "1",
+      "name": "Active Coverage",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "inPlanNetworkIndicatorCode": "W",
+      "inPlanNetworkIndicator": "Not Applicable"
+    },
+    {
+      "code": "A",
+      "name": "Co-Insurance",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitPercent": "0.4",
+      "inPlanNetworkIndicatorCode": "N",
+      "inPlanNetworkIndicator": "No",
+      "eligibilityAdditionalInformation": {
+        "codeListQualifierCode": "ZZ",
+        "codeListQualifier": "Mutually Defined",
+        "industryCode": "11",
+        "industry": "Office"
+      },
+      "eligibilityAdditionalInformationList": [
+        {
+          "codeListQualifierCode": "ZZ",
+          "codeListQualifier": "Mutually Defined",
+          "industryCode": "11",
+          "industry": "Office"
+        }
+      ]
+    },
+    {
+      "code": "A",
+      "name": "Co-Insurance",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitPercent": "0.2",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "eligibilityAdditionalInformation": {
+        "codeListQualifierCode": "ZZ",
+        "codeListQualifier": "Mutually Defined",
+        "industryCode": "11",
+        "industry": "Office"
+      },
+      "eligibilityAdditionalInformationList": [
+        {
+          "codeListQualifierCode": "ZZ",
+          "codeListQualifier": "Mutually Defined",
+          "industryCode": "11",
+          "industry": "Office"
+        }
+      ]
+    },
+    {
+      "code": "A",
+      "name": "Co-Insurance",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitPercent": "0.2",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        }
+      ],
+      "eligibilityAdditionalInformation": {
+        "codeListQualifierCode": "ZZ",
+        "codeListQualifier": "Mutually Defined",
+        "industryCode": "11",
+        "industry": "Office"
+      },
+      "eligibilityAdditionalInformationList": [
+        {
+          "codeListQualifierCode": "ZZ",
+          "codeListQualifier": "Mutually Defined",
+          "industryCode": "11",
+          "industry": "Office"
+        }
+      ]
+    },
+    {
+      "code": "A",
+      "name": "Co-Insurance",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitPercent": "0.2",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ABLETO PARTIALLY FUNDED"
+        }
+      ],
+      "eligibilityAdditionalInformation": {
+        "codeListQualifierCode": "ZZ",
+        "codeListQualifier": "Mutually Defined",
+        "industryCode": "11",
+        "industry": "Office"
+      },
+      "eligibilityAdditionalInformationList": [
+        {
+          "codeListQualifierCode": "ZZ",
+          "codeListQualifier": "Mutually Defined",
+          "industryCode": "11",
+          "industry": "Office"
+        }
+      ]
+    },
+    {
+      "code": "A",
+      "name": "Co-Insurance",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitPercent": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ABLETO FULLY FUNDED"
+        }
+      ],
+      "eligibilityAdditionalInformation": {
+        "codeListQualifierCode": "ZZ",
+        "codeListQualifier": "Mutually Defined",
+        "industryCode": "11",
+        "industry": "Office"
+      },
+      "eligibilityAdditionalInformationList": [
+        {
+          "codeListQualifierCode": "ZZ",
+          "codeListQualifier": "Mutually Defined",
+          "industryCode": "11",
+          "industry": "Office"
+        }
+      ]
+    },
+    {
+      "code": "B",
+      "name": "Co-Payment",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        }
+      ],
+      "eligibilityAdditionalInformation": {
+        "codeListQualifierCode": "ZZ",
+        "codeListQualifier": "Mutually Defined",
+        "industryCode": "11",
+        "industry": "Office"
+      },
+      "eligibilityAdditionalInformationList": [
+        {
+          "codeListQualifierCode": "ZZ",
+          "codeListQualifier": "Mutually Defined",
+          "industryCode": "11",
+          "industry": "Office"
+        }
+      ]
+    },
+    {
+      "code": "B",
+      "name": "Co-Payment",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ABLETO PARTIALLY FUNDED"
+        }
+      ],
+      "eligibilityAdditionalInformation": {
+        "codeListQualifierCode": "ZZ",
+        "codeListQualifier": "Mutually Defined",
+        "industryCode": "11",
+        "industry": "Office"
+      },
+      "eligibilityAdditionalInformationList": [
+        {
+          "codeListQualifierCode": "ZZ",
+          "codeListQualifier": "Mutually Defined",
+          "industryCode": "11",
+          "industry": "Office"
+        }
+      ]
+    },
+    {
+      "code": "B",
+      "name": "Co-Payment",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "W",
+      "inPlanNetworkIndicator": "Not Applicable",
+      "eligibilityAdditionalInformation": {
+        "codeListQualifierCode": "ZZ",
+        "codeListQualifier": "Mutually Defined",
+        "industryCode": "11",
+        "industry": "Office"
+      },
+      "eligibilityAdditionalInformationList": [
+        {
+          "codeListQualifierCode": "ZZ",
+          "codeListQualifier": "Mutually Defined",
+          "industryCode": "11",
+          "industry": "Office"
+        }
+      ]
+    },
+    {
+      "code": "B",
+      "name": "Co-Payment",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ABLETO FULLY FUNDED"
+        }
+      ],
+      "eligibilityAdditionalInformation": {
+        "codeListQualifierCode": "ZZ",
+        "codeListQualifier": "Mutually Defined",
+        "industryCode": "11",
+        "industry": "Office"
+      },
+      "eligibilityAdditionalInformationList": [
+        {
+          "codeListQualifierCode": "ZZ",
+          "codeListQualifier": "Mutually Defined",
+          "industryCode": "11",
+          "industry": "Office"
+        }
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes"
+    },
+    {
+      "code": "C",
+      "name": "Deductible",
+      "coverageLevelCode": "FAM",
+      "coverageLevel": "Family",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "23",
+      "timeQualifier": "Calendar Year",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ABLETO FULLY FUNDED"
+        }
+      ]
+    },
+    {
+      "code": "F",
+      "name": "Limitations",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ABLETO PARTIALLY FUNDED"
+        }
+      ]
+    },
+    {
+      "code": "F",
+      "name": "Limitations",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "HIGHEST BENEFIT"
+        }
+      ]
+    },
+    {
+      "code": "F",
+      "name": "Limitations",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ABLETO FULLY FUNDED"
+        }
+      ]
+    },
+    {
+      "code": "F",
+      "name": "Limitations",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes"
+    },
+    {
+      "code": "F",
+      "name": "Limitations",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ADDITIONAL COVERED PER OCCURRENCE"
+        },
+        {
+          "description": "ABLETO PARTIALLY FUNDED"
+        }
+      ]
+    },
+    {
+      "code": "F",
+      "name": "Limitations",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ADDITIONAL COVERED PER OCCURRENCE"
+        }
+      ]
+    },
+    {
+      "code": "F",
+      "name": "Limitations",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ADDITIONAL COVERED PER OCCURRENCE"
+        },
+        {
+          "description": "HIGHEST BENEFIT"
+        }
+      ]
+    },
+    {
+      "code": "F",
+      "name": "Limitations",
+      "coverageLevelCode": "IND",
+      "coverageLevel": "Individual",
+      "serviceTypeCodes": [
+        "A6"
+      ],
+      "serviceTypes": [
+        "Psychotherapy"
+      ],
+      "timeQualifierCode": "27",
+      "timeQualifier": "Visit",
+      "benefitAmount": "0",
+      "inPlanNetworkIndicatorCode": "Y",
+      "inPlanNetworkIndicator": "Yes",
+      "additionalInformation": [
+        {
+          "description": "ADDITIONAL COVERED PER OCCURRENCE"
+        },
+        {
+          "description": "ABLETO FULLY FUNDED"
+        }
+      ]
+    },
+    {
+      "code": "X",
+      "name": "Health Care Facility",
+      "inPlanNetworkIndicatorCode": "W",
+      "inPlanNetworkIndicator": "Not Applicable",
+      "benefitsRelatedEntity": {
+        "entityIdentifier": "Provider",
+        "entityType": "Non-Person Entity",
+        "entityName": "NEW YORK MEDICAL BEHAVIORAL HEALTH SERVICES",
+        "entityIdentification": "XX",
+        "entityIdentificationValue": "1235600834"
+      },
+      "benefitsRelatedEntities": [
+        {
+          "entityIdentifier": "Provider",
+          "entityType": "Non-Person Entity",
+          "entityName": "NEW YORK MEDICAL BEHAVIORAL HEALTH SERVICES",
+          "entityIdentification": "XX",
+          "entityIdentificationValue": "1235600834"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "x12": "ISA*00*          *00*          *ZZ*STEDI          *01*117151744      *260801*2306*^*00501*895742917*0*T*`~GS*HB*STEDI*117151744*20260801*230619*1*X*005010X279A1~ST*271*0001*005010X279A1~BHT*0022*11*01KYZS83TKQZAHAT1GNEBZGG8E*20260325*0901~HL*1**20*1~NM1*PR*2*UNITEDHEALTHCARE*****PI*87726~PER*IC**UR*WWW.UHCPROVIDER.COM~HL*2*1*21*1~NM1*1P*2*Jerde - Sauer*****XX*1999999984~HL*3*2*22*1~NM1*IL*1*Doe*John*A***MI*UHC202649~REF*6P*186084~REF*18*UVdQAC5j6f~N3*123 Sunnyvale Lane~N4*Fosterburgh*TX*91016~DMG*D8*19760214*M~DTP*291*RD8*20240101-20241231~HL*4*3*23*0~NM1*03*1*Doe*Jane*Alex~REF*18*UVdQAC5j6f~DMG*D8*19521121*F~INS*N*01*001*25~EB*1**30*C1*CHOICE PLUS*******W~DTP*636*D8*20240731~MSG*PROVIDER IS OUT NETWORK FOR MEMBER~MSG*FUNDING TYPE = SELF INSURED - LARGE GROUP~LS*2120~NM1*PR*2*UNITEDHEALTHCARE*****PI*87726~N3*P.O. BOX 30555~N4*SALT LAKE CITY*UT*841300555~PER*IC**UR*WWW.UHCPROVIDER.COM~LE*2120~EB*C*FAM*30***23*0*****Y~MSG*HIGHEST BENEFIT~MSG*DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*G*FAM*30*C1**23*0*****Y~MSG*HIGHEST BENEFIT~MSG*OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*C*FAM*30***24*0*****Y~MSG*HIGHEST BENEFIT~MSG*DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*C*FAM*30***29*0*****Y~MSG*HIGHEST BENEFIT~MSG*DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*G*FAM*30*C1**24*0*****Y~MSG*HIGHEST BENEFIT~MSG*OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*G*FAM*30*C1**29*0*****Y~MSG*HIGHEST BENEFIT~MSG*OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*C*FAM*30***24*3200*****W~MSG*DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*G*FAM*30*C1**24*5555.16*****W~MSG*OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*G*FAM*30*C1**23*15500*****N~MSG*OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*G*FAM*30*C1**23*6850*****Y~MSG*OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*C*FAM*30***23*3200*****Y~MSG*DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*C*FAM*30***29*0*****Y~MSG*DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*C*FAM*30***23*5000*****N~MSG*DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*G*FAM*30*C1**29*1294.84*****Y~MSG*OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*G*FAM*30*C1**29*9944.84*****N~MSG*OOP MAXIMUM IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*C*FAM*30***29*1800*****N~MSG*DEDUCTIBLE IS MET WHEN FAMILY AMOUNT IS SATISFIED~EB*1**A6*********Y~MSG*HIGHEST BENEFIT~EB*1**A6*********Y~MSG*ABLETO FULLY FUNDED~EB*1**A6*********Y~MSG*ABLETO PARTIALLY FUNDED~EB*1**A6*********W~EB*A*IND*A6***27**.4****N~III*ZZ*11~EB*A*IND*A6***27**.2****Y~III*ZZ*11~EB*A*IND*A6***27**.2****Y~MSG*HIGHEST BENEFIT~III*ZZ*11~EB*A*IND*A6***27**.2****Y~MSG*ABLETO PARTIALLY FUNDED~III*ZZ*11~EB*A*IND*A6***27**0****Y~MSG*ABLETO FULLY FUNDED~III*ZZ*11~EB*B*IND*A6***27*0*****Y~MSG*HIGHEST BENEFIT~III*ZZ*11~EB*B*IND*A6***27*0*****Y~MSG*ABLETO PARTIALLY FUNDED~III*ZZ*11~EB*B*IND*A6***27*0*****W~III*ZZ*11~EB*B*IND*A6***27*0*****Y~MSG*ABLETO FULLY FUNDED~III*ZZ*11~EB*C**A6***27*0*****Y~EB*C*FAM*A6***23*0*****Y~MSG*ABLETO FULLY FUNDED~EB*F*IND*A6***27*0*****Y~MSG*ABLETO PARTIALLY FUNDED~EB*F*IND*A6***27*0*****Y~MSG*HIGHEST BENEFIT~EB*F*IND*A6***27*0*****Y~MSG*ABLETO FULLY FUNDED~EB*F*IND*A6***27*0*****Y~EB*F*IND*A6***27*0*****Y~MSG*ADDITIONAL COVERED PER OCCURRENCE~MSG*ABLETO PARTIALLY FUNDED~EB*F*IND*A6***27*0*****Y~MSG*ADDITIONAL COVERED PER OCCURRENCE~EB*F*IND*A6***27*0*****Y~MSG*ADDITIONAL COVERED PER OCCURRENCE~MSG*HIGHEST BENEFIT~EB*F*IND*A6***27*0*****Y~MSG*ADDITIONAL COVERED PER OCCURRENCE~MSG*ABLETO FULLY FUNDED~EB*X***********W~LS*2120~NM1*1P*2*NEW YORK MEDICAL BEHAVIORAL HEALTH SERVICES*****XX*1235600834~LE*2120~SE*125*0001~GE*1*1~IEA*1*895742917~",
+  "eligibilitySearchId": "019fbf94-0f53-7283-9a6a-c55d042923d8",
+  "id": "ec_019fbf94-0f52-7761-b3b1-4848861bce75"
+}
