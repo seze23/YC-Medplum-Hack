@@ -26,12 +26,28 @@ from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from loguru import logger
 
+import services.agentphone_router as agentphone_router
+from services.demo_fixtures import demo_patient_lookup
 from services.medplum import MedplumClient
+from services.medplum_bindings import medplum_create_task
 from shared.config import PUBLIC_BASE_URL
 from voice.dashboard import snapshot
 from voice.pipeline import run_call
 
+# Text-channel side of the Patient Journey (AgentPhone SMS webhook). Voice
+# above is the call path; this is inbound text -> Task, with the same
+# Human-In-The-Loop principle -- see services/agentphone_router.py's module
+# docstring for why outbound text itself isn't wired yet (A2P 10DLC).
+#
+# patient_lookup stays on the fixture binding rather than a real Medplum
+# lookup -- see services/medplum_bindings.py's docstring for why. create_task
+# is real: every inbound text becomes an actual Medplum Task, which is what
+# makes it show up in /api/dashboard's open_tasks below.
+agentphone_router.patient_lookup = demo_patient_lookup
+agentphone_router.create_task = medplum_create_task
+
 app = FastAPI(title="Relay")
+app.include_router(agentphone_router.router)
 
 DASHBOARD_HTML = Path(__file__).resolve().parent.parent / "dashboard" / "index.html"
 

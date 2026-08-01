@@ -68,13 +68,15 @@ DEMO_AVAILABLE_SLOTS = {
 _created_tasks: list[dict] = []
 
 
-def demo_patient_lookup(phone: str) -> dict | None:
+async def demo_patient_lookup(phone: str) -> dict | None:
+    """Async to match the PatientLookup Protocol — nothing here actually
+    awaits anything, this is fixture data, not a network call."""
     if phone == DEMO_PATIENT_PHONE:
         return DEMO_PATIENT
     return None
 
 
-def demo_create_task(
+async def demo_create_task(
     *, phone: str, patient: dict | None, category: str, detail: str
 ) -> None:
     entry = {

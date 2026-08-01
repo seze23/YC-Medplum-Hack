@@ -50,15 +50,15 @@ router = APIRouter()
 
 
 class PatientLookup(Protocol):
-    def __call__(self, phone: str) -> dict | None: ...
+    async def __call__(self, phone: str) -> dict | None: ...
 
 
-def _default_patient_lookup(phone: str) -> dict | None:
-    """Stand-in until services/medplum.py exists.
+async def _default_patient_lookup(phone: str) -> dict | None:
+    """Stand-in until bound to a real implementation.
 
-    Real version: GET /fhir/R4/Patient?telecom=<phone>, return the first
-    match as a dict, or None if nobody's found. Swap the module-level
-    `patient_lookup` binding below once that call exists — don't edit the
+    Async because the real Medplum client (services/medplum.py, now built)
+    is fully async — MedplumClient.find_patient does a network call. Swap
+    the module-level `patient_lookup` binding below — don't edit the
     handler itself.
     """
     return None
@@ -68,17 +68,18 @@ patient_lookup: PatientLookup = _default_patient_lookup
 
 
 class ProgressRecorder(Protocol):
-    def __call__(self, phone: str, raw_reply: str) -> None: ...
+    async def __call__(self, phone: str, raw_reply: str) -> None: ...
 
 
-def _default_record_progress_update(phone: str, raw_reply: str) -> None:
+async def _default_record_progress_update(phone: str, raw_reply: str) -> None:
     """Stand-in until engine/scoring.py exposes an entry point.
 
     This is the seam that "revises the patient scoring system" — a reply to
     a 2-3 day follow-up check-in should eventually become an Observation in
     Medplum and feed the acceptance/follow-up-completion factors in
     engine/scoring.py. Deliberately not implementing that logic here: scoring
-    changes belong in engine/, not in a webhook handler.
+    changes belong in engine/, not in a webhook handler. Async for the same
+    reason as patient_lookup — a real implementation writes to Medplum.
     """
     pass
 
@@ -87,20 +88,20 @@ record_progress_update: ProgressRecorder = _default_record_progress_update
 
 
 class TaskCreator(Protocol):
-    def __call__(
+    async def __call__(
         self, *, phone: str, patient: dict | None, category: str, detail: str
     ) -> None: ...
 
 
-def _default_create_task(
+async def _default_create_task(
     *, phone: str, patient: dict | None, category: str, detail: str
 ) -> None:
-    """Stand-in until services/medplum.py exists.
-
-    Real version: POST a Medplum Task (status=requested), which is what
-    makes it show up on the dashboard for a human to act on. This function
-    is the entire reply mechanism right now — see the module docstring for
-    why outbound text isn't an option today.
+    """Stand-in until bound to a real implementation
+    (services/medplum_bindings.py, now built). That real version POSTs a
+    Medplum Task (status=requested), which is what makes it show up on the
+    dashboard for a human to act on. This function is the entire reply
+    mechanism right now — see the module docstring for why outbound text
+    isn't an option today.
     """
     print(f"[TASK STUB] {category} from {phone} (patient={patient}): {detail!r}")
 
@@ -108,7 +109,7 @@ def _default_create_task(
 create_task: TaskCreator = _default_create_task
 
 
-def _safe_record_progress_update(phone: str, raw_reply: str) -> None:
+async def _safe_record_progress_update(phone: str, raw_reply: str) -> None:
     """AgentPhone's SMS webhooks are fire-and-forget and want a 200
     regardless. record_progress_update can do real I/O once wired to
     Medplum, and I/O fails sometimes — that shouldn't turn into a 500 for an
@@ -116,19 +117,18 @@ def _safe_record_progress_update(phone: str, raw_reply: str) -> None:
     traceback (logger.exception), not silently dropped.
     """
     try:
-        record_progress_update(phone, raw_reply)
+        await record_progress_update(phone, raw_reply)
     except Exception:
         logger.exception("record_progress_update failed for %s", phone)
 
 
-def _safe_create_task(
+async def _safe_create_task(
     *, phone: str, patient: dict | None, category: str, detail: str
 ) -> None:
     """Same reasoning as _safe_record_progress_update. create_task is the
-    one call in this router that can trigger real downstream I/O today (the
-    demo's create_task fires two email sends for CANCELLATION) — a Gmail
-    hiccup shouldn't cost the whole webhook response, or the Task record
-    that was already appended before the email attempt.
+    one call in this router that can trigger real downstream I/O today (a
+    real Medplum write, plus email sends for several categories) — a
+    Medplum or Gmail hiccup shouldn't cost the whole webhook response.
 
     Deliberately scoped to just this call, not a blanket try/except around
     the whole handler — classification bugs (patient_lookup throwing, a
@@ -136,7 +136,7 @@ def _safe_create_task(
     the known-flaky downstream I/O gets swallowed-and-logged.
     """
     try:
-        create_task(phone=phone, patient=patient, category=category, detail=detail)
+        await create_task(phone=phone, patient=patient, category=category, detail=detail)
     except Exception:
         logger.exception("create_task failed for %s (%s)", phone, category)
 
@@ -212,25 +212,25 @@ async def agentphone_webhook(request: Request) -> Response:
     message: str = (data.get("message") or "").strip()
 
     if from_number and message:
-        _handle_inbound(from_number, message)
+        await _handle_inbound(from_number, message)
 
     return Response(status_code=200)
 
 
-def _handle_inbound(from_number: str, message: str) -> None:
+async def _handle_inbound(from_number: str, message: str) -> None:
     """Classifies intent and creates a Task. Does not reply — see module
     docstring for why. A human (or, once registration clears, an automated
     text) does the actual outreach; this function's only job is making sure
     the right thing lands on the dashboard immediately.
     """
-    patient = patient_lookup(from_number)
+    patient = await patient_lookup(from_number)
 
     # Absolute first check, before even a pending progress-update reply.
     # Fires whether or not patient_lookup found a match — an unknown number
     # saying something urgent must never be silently dropped just because
     # it doesn't match a known record.
     if _words(message) & _URGENT_KEYWORDS:
-        _safe_create_task(
+        await _safe_create_task(
             phone=from_number,
             patient=patient,
             category="URGENT_CONCERN",
@@ -243,8 +243,8 @@ def _handle_inbound(from_number: str, message: str) -> None:
     # go through the same branch as cancel/reschedule/confirm below.
     if from_number in _awaiting_progress_update:
         _awaiting_progress_update.discard(from_number)
-        _safe_record_progress_update(from_number, message)
-        _safe_create_task(
+        await _safe_record_progress_update(from_number, message)
+        await _safe_create_task(
             phone=from_number,
             patient=patient,
             category="PROGRESS_UPDATE",
@@ -269,4 +269,4 @@ def _handle_inbound(from_number: str, message: str) -> None:
     else:
         category = "GENERAL_INQUIRY"
 
-    _safe_create_task(phone=from_number, patient=patient, category=category, detail=message)
+    await _safe_create_task(phone=from_number, patient=patient, category=category, detail=message)

@@ -1,11 +1,34 @@
 """_handle_inbound's classification logic, now that it doesn't make a network
-call. Same spirit as engine/test_decision.py: given text, assert the right
-category and the right hooks got called — nothing about HTTP or FastAPI.
+call (patient_lookup still hits demo fixtures; create_task can hit real
+Medplum). Same spirit as engine/test_decision.py: given text, assert the
+right category and the right hooks got called.
+
+Everything in the Protocol chain (patient_lookup, create_task,
+record_progress_update) is async now, matching services.medplum.MedplumClient
+— so every stand-in here is wrapped with _async(), and every call to
+_handle_inbound runs through asyncio.run().
 """
 
 from __future__ import annotations
 
+import asyncio
+
 import services.agentphone_router as router_mod
+
+
+def _async(fn):
+    """Wraps a sync callable so it satisfies an async Protocol. Test-only —
+    real implementations (services/demo_fixtures.py, services/medplum_bindings.py)
+    are async because they do real I/O; these stand-ins don't need to."""
+
+    async def wrapper(*args, **kwargs):
+        return fn(*args, **kwargs)
+
+    return wrapper
+
+
+def _run(coro):
+    return asyncio.run(coro)
 
 
 def _reset():
@@ -18,9 +41,9 @@ def _reset():
 def test_urgent_keyword_creates_urgent_task(monkeypatch):
     _reset()
     calls = []
-    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(router_mod, "create_task", _async(lambda **kw: calls.append(kw)))
 
-    router_mod._handle_inbound("+1111", "this is urgent please help")
+    _run(router_mod._handle_inbound("+1111", "this is urgent please help"))
 
     assert calls[0]["category"] == "URGENT_CONCERN"
 
@@ -32,12 +55,14 @@ def test_urgent_overrides_pending_progress_update(monkeypatch):
     router_mod.mark_followup_sent("+1111")
     calls = []
     recorded = []
-    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(router_mod, "create_task", _async(lambda **kw: calls.append(kw)))
     monkeypatch.setattr(
-        router_mod, "record_progress_update", lambda phone, reply: recorded.append(reply)
+        router_mod,
+        "record_progress_update",
+        _async(lambda phone, reply: recorded.append(reply)),
     )
 
-    router_mod._handle_inbound("+1111", "emergency, something is wrong")
+    _run(router_mod._handle_inbound("+1111", "emergency, something is wrong"))
 
     assert calls[0]["category"] == "URGENT_CONCERN"
     assert recorded == []  # never reached the progress-update branch
@@ -46,9 +71,9 @@ def test_urgent_overrides_pending_progress_update(monkeypatch):
 def test_urgent_fires_for_unknown_patient(monkeypatch):
     _reset()  # patient_lookup default returns None for any number
     calls = []
-    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(router_mod, "create_task", _async(lambda **kw: calls.append(kw)))
 
-    router_mod._handle_inbound("+19995551234", "911 help")
+    _run(router_mod._handle_inbound("+19995551234", "911 help"))
 
     assert calls[0]["category"] == "URGENT_CONCERN"
     assert calls[0]["patient"] is None
@@ -57,9 +82,9 @@ def test_urgent_fires_for_unknown_patient(monkeypatch):
 def test_cancel_keyword_creates_cancellation_task(monkeypatch):
     _reset()
     calls = []
-    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(router_mod, "create_task", _async(lambda **kw: calls.append(kw)))
 
-    router_mod._handle_inbound("+1111", "I need to cancel my appointment")
+    _run(router_mod._handle_inbound("+1111", "I need to cancel my appointment"))
 
     assert len(calls) == 1
     assert calls[0]["category"] == "CANCELLATION"
@@ -69,9 +94,9 @@ def test_cancel_keyword_creates_cancellation_task(monkeypatch):
 def test_reschedule_keyword_is_distinct_from_cancel(monkeypatch):
     _reset()
     calls = []
-    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(router_mod, "create_task", _async(lambda **kw: calls.append(kw)))
 
-    router_mod._handle_inbound("+1111", "can we reschedule to Friday")
+    _run(router_mod._handle_inbound("+1111", "can we reschedule to Friday"))
 
     assert calls[0]["category"] == "RESCHEDULE_REQUEST"
 
@@ -79,9 +104,9 @@ def test_reschedule_keyword_is_distinct_from_cancel(monkeypatch):
 def test_confirm_keyword(monkeypatch):
     _reset()
     calls = []
-    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(router_mod, "create_task", _async(lambda **kw: calls.append(kw)))
 
-    router_mod._handle_inbound("+1111", "yes")
+    _run(router_mod._handle_inbound("+1111", "yes"))
 
     assert calls[0]["category"] == "CONFIRMATION"
 
@@ -89,9 +114,9 @@ def test_confirm_keyword(monkeypatch):
 def test_unrecognized_text_is_general_inquiry(monkeypatch):
     _reset()
     calls = []
-    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(router_mod, "create_task", _async(lambda **kw: calls.append(kw)))
 
-    router_mod._handle_inbound("+1111", "does my insurance cover this")
+    _run(router_mod._handle_inbound("+1111", "does my insurance cover this"))
 
     assert calls[0]["category"] == "GENERAL_INQUIRY"
 
@@ -106,12 +131,14 @@ def test_pending_progress_update_takes_priority_over_keywords(monkeypatch):
 
     calls = []
     recorded = []
-    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(router_mod, "create_task", _async(lambda **kw: calls.append(kw)))
     monkeypatch.setattr(
-        router_mod, "record_progress_update", lambda phone, reply: recorded.append(reply)
+        router_mod,
+        "record_progress_update",
+        _async(lambda phone, reply: recorded.append(reply)),
     )
 
-    router_mod._handle_inbound("+1111", "cancel, I'm feeling much better")
+    _run(router_mod._handle_inbound("+1111", "cancel, I'm feeling much better"))
 
     assert calls[0]["category"] == "PROGRESS_UPDATE"
     assert recorded == ["cancel, I'm feeling much better"]
@@ -120,41 +147,41 @@ def test_pending_progress_update_takes_priority_over_keywords(monkeypatch):
 
 def test_patient_lookup_result_is_passed_through():
     _reset()
-    router_mod.patient_lookup = lambda phone: {"id": "Patient/123"}
+    router_mod.patient_lookup = _async(lambda phone: {"id": "Patient/123"})
     calls = []
-    router_mod.create_task = lambda **kw: calls.append(kw)
+    router_mod.create_task = _async(lambda **kw: calls.append(kw))
 
-    router_mod._handle_inbound("+1111", "cancel")
+    _run(router_mod._handle_inbound("+1111", "cancel"))
 
     assert calls[0]["patient"] == {"id": "Patient/123"}
 
 
 def test_create_task_failure_does_not_propagate(monkeypatch):
-    """The actual claim: a downstream failure (email send, future Medplum
+    """The actual claim: a downstream failure (email send, real Medplum
     write) inside create_task must not blow up _handle_inbound. If this
     raises, the test fails on the exception itself -- no assertion needed
     beyond "this call completes."
     """
     _reset()
 
-    def boom(**kw):
+    async def boom(**kw):
         raise RuntimeError("simulated failure")
 
     monkeypatch.setattr(router_mod, "create_task", boom)
-    router_mod._handle_inbound("+1111", "cancel")  # must not raise
+    _run(router_mod._handle_inbound("+1111", "cancel"))  # must not raise
 
 
 def test_record_progress_update_failure_does_not_propagate(monkeypatch):
     _reset()
     router_mod.mark_followup_sent("+1111")
 
-    def boom(phone, reply):
+    async def boom(phone, reply):
         raise RuntimeError("simulated failure")
 
     monkeypatch.setattr(router_mod, "record_progress_update", boom)
-    monkeypatch.setattr(router_mod, "create_task", lambda **kw: None)
+    monkeypatch.setattr(router_mod, "create_task", _async(lambda **kw: None))
 
-    router_mod._handle_inbound("+1111", "feeling better")  # must not raise
+    _run(router_mod._handle_inbound("+1111", "feeling better"))  # must not raise
 
 
 def test_webhook_returns_200_even_when_create_task_raises(monkeypatch):
@@ -168,11 +195,11 @@ def test_webhook_returns_200_even_when_create_task_raises(monkeypatch):
 
     _reset()
     monkeypatch.delenv("AGENTPHONE_WEBHOOK_SECRET", raising=False)
-    monkeypatch.setattr(
-        router_mod,
-        "create_task",
-        lambda **kw: (_ for _ in ()).throw(RuntimeError("simulated failure")),
-    )
+
+    async def boom(**kw):
+        raise RuntimeError("simulated failure")
+
+    monkeypatch.setattr(router_mod, "create_task", boom)
 
     app = FastAPI()
     app.include_router(router_mod.router)

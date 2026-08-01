@@ -43,7 +43,7 @@ def due_for_followup(visit_date: datetime, *, now: datetime | None = None) -> bo
     return FOLLOWUP_WINDOW[0] <= elapsed <= FOLLOWUP_WINDOW[1]
 
 
-def send_due_followups(
+async def send_due_followups(
     visits: list[CompletedVisit], *, now: datetime | None = None
 ) -> list[CompletedVisit]:
     """Flags every visit that's due for a check-in and hasn't gotten one.
@@ -52,7 +52,8 @@ def send_due_followups(
     Mutates and returns the same list (marks followup_sent), mirroring
     engine/decision.py's mutate-and-return pattern. Imports are local so
     tests can monkeypatch the Task creation without touching module-load
-    order.
+    order. Async because _safe_create_task is (create_task can be a real
+    Medplum write).
 
     Uses _safe_create_task, not the raw create_task binding — one visit's
     Task-creation failure (a bad downstream email, once this dispatches to
@@ -67,7 +68,7 @@ def send_due_followups(
         if visit.followup_sent:
             continue
         if due_for_followup(visit.visit_date, now=now):
-            _safe_create_task(
+            await _safe_create_task(
                 phone=visit.phone,
                 patient=None,
                 category="FOLLOWUP_DUE",

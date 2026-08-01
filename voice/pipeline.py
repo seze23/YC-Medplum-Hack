@@ -34,7 +34,7 @@ from pipecat.audio.vad.vad_analyzer import VADParams
 from pipecat.frames.frames import TTSSpeakFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
-from pipecat.pipeline.worker import PipelineWorker
+from pipecat.pipeline.task import PipelineTask
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import (
     LLMContextAggregatorPair,
@@ -262,7 +262,7 @@ async def run_call(
         ]
     )
 
-    worker = PipelineWorker(pipeline, conversation_id=call_sid or stream_sid)
+    worker = PipelineTask(pipeline, conversation_id=call_sid or stream_sid)
     runner = PipelineRunner(handle_sigint=False)
 
     # The agent has to speak first. Without this the pipeline sits waiting for
