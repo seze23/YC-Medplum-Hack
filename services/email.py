@@ -78,6 +78,60 @@ def send_reschedule_options(
     _send(to_email, subject, body)
 
 
+def send_urgent_alert(
+    to_email: str, *, from_phone: str, patient_name: str | None, message: str
+) -> None:
+    """Sent to clinic STAFF, not the patient — the text-channel parallel to
+    engine/redflags.py's emergency handling on the voice side. A generic
+    Task is easy to miss in a list; this is meant to interrupt someone.
+    """
+    subject = f"URGENT: message from {patient_name or from_phone} needs review"
+    body = (
+        f"A patient texted something flagged urgent and needs a human to "
+        f"look at this now, not whenever the Task queue gets checked.\n\n"
+        f"From: {patient_name or 'Unknown patient'} ({from_phone})\n"
+        f"Message: {message!r}\n\n"
+        f"This is a staff notification only — not a substitute for "
+        f"911/emergency services if this is a medical emergency."
+    )
+    _send(to_email, subject, body)
+
+
+def send_confirmation_ack(
+    to_email: str, *, provider_name: str, when: str, clinic_name: str = "the clinic"
+) -> None:
+    """Sent when a patient texts back a confirmation. Same recipient as the
+    exit survey — one email address per patient, one identity across every
+    flow they touch, not a different inbox per feature.
+    """
+    subject = f"You're confirmed with {provider_name}"
+    body = (
+        f"Hi,\n\nThanks for confirming — you're all set for your visit "
+        f"with {provider_name} at {clinic_name} on {when}. See you then!\n\n"
+        f"— {clinic_name}"
+    )
+    _send(to_email, subject, body)
+
+
+def send_referral_request(
+    to_email: str, *, provider_name: str, clinic_name: str = "the clinic"
+) -> None:
+    """Sent when Stedi eligibility comes back with referral_required=True and
+    no referral on file (shared/state.py's Insurance.referral_required /
+    referral_valid_through). Catching this before the visit, not after,
+    is the whole point — avoids a denied claim surprising the patient later.
+    """
+    subject = f"A referral is needed before your visit with {provider_name}"
+    body = (
+        f"Hi,\n\nYour insurance requires a referral for your upcoming visit "
+        f"with {provider_name} at {clinic_name}, and we don't have one on "
+        f"file yet.\n\nPlease ask your primary care provider to send a "
+        f"referral to {clinic_name} as soon as possible so your visit isn't "
+        f"delayed.\n\n— {clinic_name}"
+    )
+    _send(to_email, subject, body)
+
+
 def send_cancellation_exit_survey(to_email: str, *, clinic_name: str = "the clinic") -> None:
     """Sent to the patient who cancelled. Qualitative, not structured —
     the point is collecting a reason, not filling a form field."""

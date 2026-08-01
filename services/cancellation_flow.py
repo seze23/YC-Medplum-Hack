@@ -8,11 +8,12 @@ Two emails go out per cancellation:
   1. To the patient who cancelled — the exit survey (why'd you cancel).
   2. To the top-ranked waitlisted patients — the freed-slot offer.
 
-Not yet wired into agentphone_router.py's CANCELLATION branch — that needs
-the cancelling patient's email and the freed appointment's provider/time,
-both of which come from Medplum, which doesn't exist here yet. Wire
-`handle_cancellation` in once `patient_lookup` in agentphone_router.py
-returns something real.
+Not called from agentphone_router.py directly — that router only classifies
+and calls create_task; services/demo_fixtures.py's demo_create_task is what
+dispatches CANCELLATION here, using fixture data for the email and
+appointment details that will eventually come from Medplum. Swap
+get_waitlist_candidates for a real Medplum query when that exists; nothing
+in handle_cancellation's signature needs to change.
 """
 
 from __future__ import annotations

@@ -45,6 +45,45 @@ def list_tasks():
     return {"tasks": get_created_tasks()}
 
 
+@app.get("/waitlist")
+def list_waitlist():
+    """Ranked waitlist, for the optimizer dashboard to consume. Real version
+    once Medplum exists: same shape, sourced from an actual waitlist query
+    instead of demo_get_waitlist_candidates. Score and rank are computed
+    fresh on every call, per engine/patient_score.py's design — there's
+    nothing to go stale."""
+    from engine.patient_score import rank_waitlist
+
+    candidates = demo_get_waitlist_candidates()
+    ranked = rank_waitlist([(pid, inp) for pid, _email, inp in candidates])
+    email_by_id = {pid: email for pid, email, _inp in candidates}
+    return {
+        "waitlist": [
+            {"patient_id": pid, "email": email_by_id[pid], "score": round(score, 3)}
+            for pid, score in ranked
+        ]
+    }
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.post("/demo/referral-check")
+def demo_referral_check():
+    """Manual trigger standing in for his Stedi eligibility check returning
+    referral_required=True with nothing on file. Real version: called from
+    wherever the eligibility response is parsed, not a standalone endpoint —
+    this only exists as a demo entry point since that trigger doesn't exist
+    yet on his side.
+    """
+    from services.demo_fixtures import DEMO_PATIENT
+    from services.referral_flow import handle_referral_required
+
+    sent = handle_referral_required(
+        DEMO_PATIENT["email"],
+        provider_name=DEMO_PATIENT["appointment"]["provider_name"],
+        clinic_name="Relay Physical Therapy",
+    )
+    return {"sent": sent}

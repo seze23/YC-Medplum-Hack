@@ -26,11 +26,11 @@ Two wrinkles, matching the notes in agentphone.py:
      nothing else. (Only voice events need a JSON `{"text": ...}` body back —
      not this channel, that's Twilio -> Pipecat's problem.)
 
-Not wired into an app yet because no FastAPI entrypoint exists in the repo
-yet either. Once one does:
+Wired today into main.py (a demo-only entrypoint — see its docstring) via:
 
-    from services.agentphone_router import router as agentphone_router
-    app.include_router(agentphone_router)
+    app.include_router(agentphone_router.router)
+
+Once his real app exists, merge this router into it the same way.
 """
 
 from __future__ import annotations
@@ -160,6 +160,13 @@ def mark_followup_sent(phone: str) -> None:
 # router's. Cancel and reschedule are split because they're different Medplum
 # writes (Appointment.status=cancelled vs. a new booking search), not because
 # the demo needs to distinguish them cosmetically.
+# Checked before every other category, including a pending progress-update
+# reply — same "safety overrides everything else" principle as
+# engine/redflags.py on the voice side. Deliberately tight: broad words like
+# "pain" or "worse" would false-positive constantly on a text channel with
+# no clinical triage behind it, unlike the voice side's red-flag classifier.
+_URGENT_KEYWORDS = {"urgent", "emergency", "911", "help"}
+
 _CANCEL_KEYWORDS = {"cancel"}
 _RESCHEDULE_KEYWORDS = {"reschedule", "change"}
 _CONFIRM_KEYWORDS = {"confirm", "yes", "y"}
@@ -218,7 +225,20 @@ def _handle_inbound(from_number: str, message: str) -> None:
     """
     patient = patient_lookup(from_number)
 
-    # Checked first, unconditionally — a follow-up reply is free text
+    # Absolute first check, before even a pending progress-update reply.
+    # Fires whether or not patient_lookup found a match — an unknown number
+    # saying something urgent must never be silently dropped just because
+    # it doesn't match a known record.
+    if _words(message) & _URGENT_KEYWORDS:
+        _safe_create_task(
+            phone=from_number,
+            patient=patient,
+            category="URGENT_CONCERN",
+            detail=message,
+        )
+        return
+
+    # Checked next — a follow-up reply is free text
     # ("shoulder's still tight but better"), not a keyword match, so it can't
     # go through the same branch as cancel/reschedule/confirm below.
     if from_number in _awaiting_progress_update:
@@ -236,11 +256,12 @@ def _handle_inbound(from_number: str, message: str) -> None:
 
     if words & _CANCEL_KEYWORDS:
         category = "CANCELLATION"
-        # TODO once patient_lookup returns a real record with an email and
-        # an appointment: call services.cancellation_flow.handle_cancellation
-        # here with the cancelling patient's email + the freed slot's
-        # provider/time. Deliberately not wired yet — nothing here can
-        # resolve those from a stub that returns None.
+        # This router never calls cancellation_flow/reschedule_flow/etc.
+        # directly — create_task's implementation decides what a category
+        # means. Today that's services/demo_fixtures.py's demo_create_task,
+        # dispatching to the real flow files with fixture data. Once his
+        # Medplum-backed create_task exists, it should mirror that same
+        # dispatch-by-category — nothing here needs to change either way.
     elif words & _RESCHEDULE_KEYWORDS:
         category = "RESCHEDULE_REQUEST"
     elif words & _CONFIRM_KEYWORDS:

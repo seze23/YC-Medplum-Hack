@@ -53,15 +53,21 @@ def send_due_followups(
     engine/decision.py's mutate-and-return pattern. Imports are local so
     tests can monkeypatch the Task creation without touching module-load
     order.
+
+    Uses _safe_create_task, not the raw create_task binding — one visit's
+    Task-creation failure (a bad downstream email, once this dispatches to
+    a real flow) must not abort every other visit still waiting in the
+    batch. Caught during a full-codebase review: this was calling the
+    unprotected create_task directly, unlike every other caller.
     """
-    from services.agentphone_router import create_task, mark_followup_sent
+    from services.agentphone_router import _safe_create_task, mark_followup_sent
 
     sent = []
     for visit in visits:
         if visit.followup_sent:
             continue
         if due_for_followup(visit.visit_date, now=now):
-            create_task(
+            _safe_create_task(
                 phone=visit.phone,
                 patient=None,
                 category="FOLLOWUP_DUE",

@@ -2,9 +2,17 @@
 email flow can be demoed live today without waiting on services/medplum.py.
 
 Every function here is a drop-in replacement for a stub already defined
-elsewhere (patient_lookup, create_task, get_waitlist_candidates). Swap them
-back for real Medplum calls in main.py's composition root once his client
-exists — nothing in agentphone_router.py or cancellation_flow.py changes.
+elsewhere (patient_lookup, create_task, get_waitlist_candidates,
+get_available_slots). Swap them back for real Medplum calls in main.py's
+composition root once his client exists — nothing in agentphone_router.py,
+cancellation_flow.py, reschedule_flow.py, confirmation_flow.py, or
+urgent_escalation.py changes.
+
+demo_create_task is also the dispatch point deciding what each Task
+category actually does — URGENT_CONCERN/CANCELLATION/RESCHEDULE_REQUEST/
+CONFIRMATION each call their matching flow file. GENERAL_INQUIRY and
+PROGRESS_UPDATE intentionally do nothing beyond logging the Task, per
+explicit scope calls made during today's build.
 
 DEMO_PATIENT_PHONE is +17182337507, the number already used for the live
 AgentPhone tests today. Text the AgentPhone number FROM that phone to play
@@ -79,7 +87,15 @@ def demo_create_task(
     _created_tasks.append(entry)
     print(f"[TASK] {category} — {entry['patient_name'] or phone}: {detail!r}")
 
-    if category == "CANCELLATION" and patient:
+    if category == "URGENT_CONCERN":
+        from services.urgent_escalation import handle_urgent_concern
+
+        handle_urgent_concern(
+            from_phone=phone,
+            patient_name=patient["name"] if patient else None,
+            message=detail,
+        )
+    elif category == "CANCELLATION" and patient:
         from services.cancellation_flow import handle_cancellation
 
         appt = patient["appointment"]
@@ -96,6 +112,16 @@ def demo_create_task(
         handle_reschedule(
             patient_email=patient["email"],
             provider_name=appt["provider_name"],
+            clinic_name="Relay Physical Therapy",
+        )
+    elif category == "CONFIRMATION" and patient:
+        from services.confirmation_flow import handle_confirmation
+
+        appt = patient["appointment"]
+        handle_confirmation(
+            patient["email"],
+            provider_name=appt["provider_name"],
+            when=appt["when"],
             clinic_name="Relay Physical Therapy",
         )
 

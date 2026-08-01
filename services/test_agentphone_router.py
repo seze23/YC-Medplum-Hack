@@ -15,6 +15,45 @@ def _reset():
     router_mod.create_task = router_mod._default_create_task
 
 
+def test_urgent_keyword_creates_urgent_task(monkeypatch):
+    _reset()
+    calls = []
+    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+
+    router_mod._handle_inbound("+1111", "this is urgent please help")
+
+    assert calls[0]["category"] == "URGENT_CONCERN"
+
+
+def test_urgent_overrides_pending_progress_update(monkeypatch):
+    """Safety-first ordering: even mid-followup-conversation, an urgent
+    word takes priority over the progress-update branch."""
+    _reset()
+    router_mod.mark_followup_sent("+1111")
+    calls = []
+    recorded = []
+    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+    monkeypatch.setattr(
+        router_mod, "record_progress_update", lambda phone, reply: recorded.append(reply)
+    )
+
+    router_mod._handle_inbound("+1111", "emergency, something is wrong")
+
+    assert calls[0]["category"] == "URGENT_CONCERN"
+    assert recorded == []  # never reached the progress-update branch
+
+
+def test_urgent_fires_for_unknown_patient(monkeypatch):
+    _reset()  # patient_lookup default returns None for any number
+    calls = []
+    monkeypatch.setattr(router_mod, "create_task", lambda **kw: calls.append(kw))
+
+    router_mod._handle_inbound("+19995551234", "911 help")
+
+    assert calls[0]["category"] == "URGENT_CONCERN"
+    assert calls[0]["patient"] is None
+
+
 def test_cancel_keyword_creates_cancellation_task(monkeypatch):
     _reset()
     calls = []
