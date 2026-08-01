@@ -1,4 +1,4 @@
-"""Environment loading. One place, so nothing reads os.environ directly."""
+﻿"""Environment loading. One place, so nothing reads os.environ directly."""
 
 from __future__ import annotations
 
@@ -53,6 +53,10 @@ STEDI_API_KEY = _get("STEDI_API_KEY")
 STEDI_TEST_PAYER_ID = _get("STEDI_TEST_PAYER_ID") or "87726"
 STEDI_TEST_MEMBER_ID = _get("STEDI_TEST_MEMBER_ID") or "UHC202649"
 
+# Moss needs BOTH a project id and a project key — it authenticates even for
+# local session indexes, so there is no offline mode without them.
+MOSS_PROJECT_ID = _get("MOSS_PROJECT_ID")
+MOSS_PROJECT_KEY = _get("MOSS_PROJECT_KEY")
 MOSS_API_KEY = _get("MOSS_API_KEY")
 
 # The phone you demo from. Seeded onto the returning patient's record so caller
@@ -74,3 +78,4 @@ TWILIO_SAMPLE_RATE = 8000
 TWILIO_ENCODING = "mulaw"
 
 require = _require
+

@@ -1,4 +1,4 @@
-"""Check every external dependency in one shot.
+﻿"""Check every external dependency in one shot.
 
     python -m scripts.verify
 
@@ -187,9 +187,31 @@ async def check_stedi(r: Report, http: httpx.AsyncClient) -> None:
 
 
 async def check_moss(r: Report) -> None:
-    if not config.MOSS_API_KEY:
-        return r.add("Moss", None, "MOSS_API_KEY not set — local index in use")
-    r.add("Moss", True, "key present")
+    """Report which retrieval backend will actually answer, not just key presence."""
+    if not (config.MOSS_PROJECT_ID and config.MOSS_PROJECT_KEY):
+        return r.add(
+            "Moss", None, "MOSS_PROJECT_ID/KEY not set — local index in use"
+        )
+    try:
+        from services import moss
+
+        await moss.index_patient(
+            "verify-probe",
+            {"conditions": [{"code": {"text": "right shoulder impingement"},
+                             "clinicalStatus": {"coding": [{"code": "resolved"}]},
+                             "recordedDate": "2026-02-02"}],
+             "encounters": [], "appointments": []},
+        )
+        hits = await moss.retrieve("verify-probe", query="shoulder")
+        ms = moss.last_query_ms()
+        moss.clear()
+        backend = moss.backend_name()
+        detail = f"backend={backend}, {len(hits)} hit(s)"
+        if ms is not None:
+            detail += f", {ms:.1f}ms"
+        r.add("Moss", backend == "moss", detail)
+    except Exception as exc:  # noqa: BLE001
+        r.add("Moss", False, f"{type(exc).__name__}: {str(exc)[:80]}")
 
 
 async def main() -> int:
@@ -208,3 +230,4 @@ async def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(asyncio.run(main()))
+
