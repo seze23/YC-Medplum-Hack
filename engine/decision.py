@@ -39,7 +39,11 @@ def decide(state: CallState) -> CallState:
         return state
 
     state.emergency = False
-    state.review_flags = _confidence_flags(state)
+    # Confidence flags are recomputed each turn, but flags raised elsewhere —
+    # a failed Medplum call, an urgent triage note — are not ours to discard.
+    # decide() is called after every extraction, so overwriting the list here
+    # silently loses them.
+    state.review_flags = _dedupe(_preserved(state) + _confidence_flags(state))
 
     # 2. Progressive collection.
     if not _identity_settled(state):
@@ -48,7 +52,9 @@ def decide(state: CallState) -> CallState:
         state.next_action = NextAction.COLLECT_SYMPTOMS
     elif triage.escalate:
         # Serious but not an emergency: a human calls back, we don't auto-book.
-        state.review_flags = [f"URGENT: {r}" for r in triage.reasons] + state.review_flags
+        state.review_flags = _dedupe(
+            [f"URGENT: {r}" for r in triage.reasons] + state.review_flags
+        )
         state.next_action = NextAction.ESCALATE
     elif not _insurance_settled(state):
         state.next_action = NextAction.VERIFY_INSURANCE
@@ -93,6 +99,21 @@ def _insurance_settled(state: CallState) -> bool:
     # Settled means Stedi has actually answered, not merely that we collected
     # a member ID. `covered` stays None until the eligibility call returns.
     return state.insurance.covered is not None
+
+
+def _preserved(state: CallState) -> list[str]:
+    """Flags the engine did not raise and must not drop."""
+    return [f for f in state.review_flags if not f.startswith("REVIEW ")]
+
+
+def _dedupe(flags: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for flag in flags:
+        if flag not in seen:
+            seen.add(flag)
+            out.append(flag)
+    return out
 
 
 def _confidence_flags(state: CallState) -> list[str]:
