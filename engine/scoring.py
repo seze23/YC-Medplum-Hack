@@ -85,7 +85,12 @@ def rank_slots(
     now: datetime | None = None,
 ) -> list[tuple[Slot, float]]:
     """Best first. Ties broken by earliest start so the order is stable."""
-    now = now or datetime.now()
+    # Match the slots' awareness. Medplum returns tz-aware timestamps, and a
+    # bare datetime.now() here raises "can't subtract offset-naive and
+    # offset-aware datetimes" the moment it meets real data.
+    if now is None:
+        tzinfo = slots[0].start.tzinfo if slots else None
+        now = datetime.now(tzinfo)
     scored = [
         (
             s,

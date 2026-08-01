@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Relay — Clinic Operations</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #121820;
+    --panel-2: #171f2a;
+    --line: #232d3b;
+    --ink: #e8eef6;
+    --muted: #8b9bb0;
+    --accent: #4ade80;
+    --accent-dim: #16643a;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --blue: #60a5fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 28px 32px 48px;
+  }
+  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 6px; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .live {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--muted);
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 0 0 rgba(74,222,128,.7); animation: pulse 2s infinite;
+  }
+  .dot.stale { background: var(--danger); animation: none; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(74,222,128,.6); }
+    70% { box-shadow: 0 0 0 7px rgba(74,222,128,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin: 22px 0; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .tile .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; }
+  .tile .value { font-size: 34px; font-weight: 650; margin-top: 6px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .tile .foot { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 14px; font-weight: 600; }
+
+  .call { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .call.emergency { border-color: var(--danger); background: #241318; }
+  .call-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .call-name { font-weight: 600; }
+  .pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: auto; }
+  .pill.emergency { background: var(--danger); color: #24070b; border-color: var(--danger); font-weight: 700; }
+
+  .bars { display: grid; gap: 7px; }
+  .bar-row { display: grid; grid-template-columns: 88px 1fr 42px; align-items: center; gap: 10px; font-size: 12px; }
+  .bar-row .n { color: var(--muted); }
+  .track { height: 6px; background: #0d131a; border-radius: 3px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width .4s ease; }
+  .fill.low { background: var(--warn); }
+  .fill.zero { background: #2b3543; }
+  .pct { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  ul { list-style: none; margin: 0; padding: 0; }
+  li.task { border-left: 3px solid var(--line); padding: 9px 0 9px 12px; margin-bottom: 10px; font-size: 13px; }
+  li.task.stat { border-left-color: var(--danger); }
+  li.task.urgent { border-left-color: var(--warn); }
+  .task .prio { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+  .task.stat .prio { color: var(--danger); font-weight: 700; }
+  .task.urgent .prio { color: var(--warn); font-weight: 600; }
+
+  .res { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 11px; font-size: 12px; }
+  .chip b { color: var(--blue); font-variant-numeric: tabular-nums; }
+  .empty { color: var(--muted); font-size: 13px; font-style: italic; }
+  .err { color: var(--danger); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Relay</h1>
+  <span class="sub">Bayview Physical Therapy — clinic operations</span>
+  <span class="live"><span class="dot" id="dot"></span><span id="stamp">connecting…</span></span>
+</header>
+
+<div class="tiles">
+  <div class="tile">
+    <div class="label">FHIR resources written</div>
+    <div class="value" id="t-res">—</div>
+    <div class="foot">from inbound calls</div>
+  </div>
+  <div class="tile">
+    <div class="label">Appointments booked</div>
+    <div class="value" id="t-appt">—</div>
+    <div class="foot">autonomously</div>
+  </div>
+  <div class="tile">
+    <div class="label">Slot utilization</div>
+    <div class="value" id="t-util">—</div>
+    <div class="foot" id="t-util-foot">—</div>
+  </div>
+  <div class="tile">
+    <div class="label">Revenue recovered</div>
+    <div class="value" id="t-rev">—</div>
+    <div class="foot">at $120 / visit</div>
+  </div>
+</div>
+
+<div class="grid">
+  <section>
+    <h2>Live calls</h2>
+    <div id="calls"><p class="empty">No active calls.</p></div>
+    <h2 style="margin-top:22px">Record written</h2>
+    <div class="res" id="res"></div>
+  </section>
+
+  <section>
+    <h2>Open tasks — human review</h2>
+    <ul id="tasks"><li class="empty">Nothing awaiting review.</li></ul>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const money = n => '$' + (n ?? 0).toLocaleString();
+
+function confidenceRow(name, value) {
+  const pct = Math.round((value || 0) * 100);
+  const cls = value === 0 ? 'zero' : (value < 0.7 ? 'low' : '');
+  return `<div class="bar-row">
+    <span class="n">${name}</span>
+    <span class="track"><span class="fill ${cls}" style="width:${pct}%"></span></span>
+    <span class="pct">${pct}%</span>
+  </div>`;
+}
+
+function renderCalls(calls) {
+  if (!calls || !calls.length) {
+    $('calls').innerHTML = '<p class="empty">No active calls.</p>';
+    return;
+  }
+  $('calls').innerHTML = calls.map(c => `
+    <div class="call ${c.emergency ? 'emergency' : ''}">
+      <div class="call-head">
+        <span class="call-name">${c.name || 'Caller'}</span>
+        <span class="sub">${(c.next_action || '').replace(/_/g, ' ')}</span>
+        ${c.emergency ? '<span class="pill emergency">Emergency stop</span>'
+                      : '<span class="pill">live</span>'}
+      </div>
+      <div class="bars">
+        ${confidenceRow('identity', c.confidence.identity)}
+        ${confidenceRow('symptoms', c.confidence.symptoms)}
+        ${confidenceRow('insurance', c.confidence.insurance)}
+        ${confidenceRow('scheduling', c.confidence.scheduling)}
+      </div>
+    </div>`).join('');
+}
+
+function renderTasks(tasks) {
+  if (!tasks || !tasks.length) {
+    $('tasks').innerHTML = '<li class="empty">Nothing awaiting review.</li>';
+    return;
+  }
+  $('tasks').innerHTML = tasks.map(t => `
+    <li class="task ${t.priority}">
+      <div class="prio">${t.priority}</div>
+      <div>${t.description}</div>
+    </li>`).join('');
+}
+
+async function tick() {
+  try {
+    const r = await fetch('/api/dashboard', { cache: 'no-store' });
+    const d = await r.json();
+
+    if (d.error) {
+      $('dot').className = 'dot stale';
+      $('stamp').textContent = 'Medplum unreachable';
+      $('res').innerHTML = `<span class="err">${d.error}</span>`;
+      return;
+    }
+
+    $('t-res').textContent  = d.resources_total ?? 0;
+    $('t-appt').textContent = d.appointments_booked ?? 0;
+    $('t-util').textContent = (d.utilization?.percent ?? 0) + '%';
+    $('t-util-foot').textContent =
+      `${d.utilization?.busy ?? 0} of ${d.utilization?.total ?? 0} slots`;
+    $('t-rev').textContent  = money(d.revenue_recovered);
+
+    $('res').innerHTML = Object.entries(d.resources || {})
+      .map(([k, v]) => `<span class="chip">${k} <b>${v}</b></span>`).join('');
+
+    renderCalls(d.active_calls);
+    renderTasks(d.open_tasks);
+
+    $('dot').className = 'dot';
+    $('stamp').textContent = 'live · ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    $('dot').className = 'dot stale';
+    $('stamp').textContent = 'reconnecting…';
+  }
+}
+
+tick();
+setInterval(tick, 2000);
+</script>
+</body>
+</html>

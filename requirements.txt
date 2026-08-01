@@ -1,9 +1,25 @@
-pipecat-ai[deepgram,anthropic,silero]
+pipecat-ai[deepgram,anthropic,openai,silero]
 fastapi
+# Required for request.form(). Without it Starlette cannot parse Twilio's
+# form-encoded webhook body, so the caller's number never reaches us and
+# caller-ID patient matching silently never fires.
+python-multipart
 uvicorn[standard]
 websockets
 python-dotenv
 twilio
 httpx
 anthropic
+openai
 pytest
+
+# PIN — DO NOT BUMP WITHOUT TESTING.
+# nltk 3.10.x ships an import hook (nltk/inisec.py, a CWE-427 mitigation) that
+# misfires here: it blocks even stdlib imports such as `http` whenever an nltk
+# frame is on the stack, and it does so with or without -P / PYTHONSAFEPATH.
+# That makes `import pipecat.pipeline.runner` fail outright, since pipecat pulls
+# nltk in via pipecat.utils.string.match_endofsentence.
+# 3.9.1 has no such hook and match_endofsentence works fine against it.
+# pip will warn that pipecat wants nltk>=3.10.0 — that constraint is cosmetic
+# for the one function pipecat actually calls. Ignore the warning.
+nltk==3.9.1
