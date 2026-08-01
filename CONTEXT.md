@@ -1,5 +1,6 @@
 # Relay
 ## Autonomous Patient Operations Platform
+### Authors: Mohammad Aszad Syed (Syedaszad) & Sydney Eze (seze23)
 
 Version: 1.1
 
