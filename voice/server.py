@@ -33,6 +33,19 @@ from voice.pipeline import run_call
 
 app = FastAPI(title="Relay")
 
+
+@app.on_event("startup")
+async def _warm_dependencies() -> None:
+    """Absorb one-off initialisation costs before any call arrives.
+
+    A caller will not wait eleven seconds in silence to find out the retrieval
+    engine was still loading its model.
+    """
+    from services import medplum, moss
+
+    await medplum.warmup()
+    await moss.warmup()
+
 DASHBOARD_HTML = Path(__file__).resolve().parent.parent / "dashboard" / "index.html"
 
 

@@ -48,7 +48,13 @@ FIXTURE_PATH: Path = FIXTURES / "stedi_eligibility.json"
 # X12 EB01 eligibility/benefit codes we care about.
 ACTIVE_COVERAGE = "1"
 CO_PAYMENT = "B"
+CO_INSURANCE = "A"
 DEDUCTIBLE = "C"
+# Stop Loss — the annual out-of-pocket maximum. Worth speaking when the plan
+# has no copay line: "you have $1,294 left before you hit your out-of-pocket
+# maximum" is a concrete, useful number, and plenty of real plans answer a PT
+# query with deductible and stop-loss but no copay at all.
+OUT_OF_POCKET = "G"
 # EB06 time qualifier: 29 = Remaining.
 REMAINING = "29"
 # EB03 service type. PT is physical therapy specifically; 30 is "Health Benefit
@@ -64,7 +70,9 @@ RELEVANT_SERVICE_TYPES = {PHYSICAL_THERAPY, PLAN_WIDE}
 class Eligibility:
     covered: bool = False
     copay: float | None = None
+    coinsurance_percent: float | None = None
     deductible_remaining: float | None = None
+    out_of_pocket_remaining: float | None = None
     referral_required: bool | None = None
     referral_valid_through: str | None = None
     plan_name: str = ""
@@ -79,8 +87,17 @@ class Eligibility:
                 "still get you booked."
             )
         parts = ["Good news — you're covered."]
+
         if self.copay is not None:
             parts.append(f"Your copay is ${self.copay:.0f} per visit.")
+        elif self.coinsurance_percent:
+            # Plenty of plans have no copay line at all and price the visit as
+            # a percentage instead. Saying nothing would waste the one moment
+            # the caller most wants a number.
+            parts.append(
+                f"You pay {self.coinsurance_percent * 100:.0f} percent of the visit cost."
+            )
+
         if self.deductible_remaining is not None:
             if self.deductible_remaining <= 0:
                 # "$0 remaining" is technically right and sounds like an error.
@@ -90,6 +107,12 @@ class Eligibility:
                     f"You have ${self.deductible_remaining:.0f} remaining on your "
                     "deductible."
                 )
+
+        if self.out_of_pocket_remaining:
+            parts.append(
+                f"And ${self.out_of_pocket_remaining:,.0f} before you reach your "
+                "out-of-pocket maximum."
+            )
         if self.referral_required is False:
             parts.append("No referral needed.")
         elif self.referral_required and self.referral_valid_through:
@@ -209,12 +232,26 @@ def parse(payload: dict[str, Any]) -> Eligibility:
             # Prefer a PT-specific figure over a later plan-wide one.
             if result.copay is None or PHYSICAL_THERAPY in service_types:
                 result.copay = amount
+        elif code == CO_INSURANCE and relevant and in_network:
+            percent = _money(entry.get("benefitPercent"))
+            if percent is not None and result.coinsurance_percent is None:
+                result.coinsurance_percent = percent
+        # Real 271s return the same figure several times across coverage tiers,
+        # and a payer that has nothing to report for a tier sends 0 rather than
+        # omitting the line. Taking the first match therefore lands on a
+        # meaningless zero. Take the largest in-network "remaining" instead:
+        # disambiguating tiers properly needs plan context we do not have, and
+        # understating what a patient still owes is the worse error.
         elif code == DEDUCTIBLE and relevant and in_network and amount is not None:
             if entry.get("timeQualifierCode") == REMAINING:
-                # First in-network "remaining" line wins; later ones are
-                # usually the same figure restated per tier.
-                if result.deductible_remaining is None:
-                    result.deductible_remaining = amount
+                result.deductible_remaining = max(
+                    amount, result.deductible_remaining or 0.0
+                )
+        elif code == OUT_OF_POCKET and relevant and in_network and amount is not None:
+            if entry.get("timeQualifierCode") == REMAINING:
+                result.out_of_pocket_remaining = max(
+                    amount, result.out_of_pocket_remaining or 0.0
+                )
 
         if "authOrCertIndicator" in entry:
             # Y here means prior auth / referral is required.

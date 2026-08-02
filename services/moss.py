@@ -83,6 +83,30 @@ def _moss_client() -> Any:
         return None
 
 
+async def warmup() -> None:
+    """Pay Moss's cold-start cost at server boot instead of on the first call.
+
+    Measured on a real call: client init 4.0s, first add_docs 4.8s, first query
+    2.3s — about eleven seconds, all of it before the pipeline had even started,
+    so the caller heard nothing and hung up. None of that is per-patient work;
+    it is one-off SDK and model initialisation. Doing it at startup makes the
+    first call as fast as the tenth.
+    """
+    client = _moss_client()
+    if client is None:
+        return
+    try:
+        started = time.perf_counter()
+        from moss import DocumentInfo
+
+        session = await client.session("relay-warmup")
+        await session.add_docs([DocumentInfo(id="0", text="warmup document")])
+        await session.query("warmup", _query_options(1))
+        logger.info(f"Moss warm ({(time.perf_counter() - started) * 1000:.0f}ms)")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"Moss warmup failed ({exc}) — first call may be slow.")
+
+
 def backend_name() -> str:
     """Which backend actually answered the last retrieve: 'moss' or 'local'.
 
