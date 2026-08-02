@@ -36,6 +36,35 @@ RELAY_TAG_SYSTEM = "https://relay.health/tags"
 RELAY_CALL_TAG = "RELAY_CALL"
 
 
+_shared: "MedplumClient | None" = None
+
+
+def shared_client() -> "MedplumClient":
+    """One client for the whole process, so the OAuth token is cached.
+
+    Constructing a fresh client per call meant a full client-credentials
+    handshake on every inbound call — around 1.5s, spent before the agent could
+    say anything. Worse, it pushed the caller-ID lookup past its timeout, so the
+    caller stopped being recognised and the greeting lost their name.
+    """
+    global _shared
+    if _shared is None:
+        _shared = MedplumClient()
+    return _shared
+
+
+async def warmup() -> None:
+    """Fetch and cache an access token before any call arrives."""
+    from loguru import logger
+
+    try:
+        client = shared_client()
+        await client._access_token()
+        logger.info("Medplum token cached.")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"Medplum warmup failed ({exc}) — first call may be slow.")
+
+
 class MedplumClient:
     def __init__(self, base_url: str | None = None) -> None:
         self.base_url = (base_url or MEDPLUM_BASE_URL).rstrip("/")

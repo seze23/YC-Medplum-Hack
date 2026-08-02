@@ -23,6 +23,7 @@ talked out of the emergency branch is not a safety control.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import aiohttp
@@ -50,7 +51,7 @@ from pipecat.transports.websocket.fastapi import (
 )
 
 from engine.decision import decide
-from services.medplum import MedplumClient
+from services.medplum import shared_client
 from shared.config import (
     ANTHROPIC_API_KEY,
     DEEPGRAM_API_KEY,
@@ -92,7 +93,9 @@ async def run_call(
     if caller_number:
         state.identity.phone = caller_number
 
-    medplum = MedplumClient()
+    # Shared, already-authenticated client — a per-call handshake cost ~1.5s of
+    # dead air before the agent could speak.
+    medplum = shared_client()
     orchestrator = CallOrchestrator(medplum)
 
     # Resolve the caller from their number while the line is still connecting.
@@ -100,13 +103,20 @@ async def run_call(
     # loaded — which is the whole difference between this and a phone tree.
     greeting = GREETING
     try:
-        if await orchestrator.preload_by_caller_id(state):
+        # Hard ceiling on how long the caller waits in silence. Recognising them
+        # is worth a beat, but not an unbounded one — if Medplum is slow we open
+        # with the generic greeting and ask for their name like any other call.
+        if await asyncio.wait_for(
+            orchestrator.preload_by_caller_id(state), timeout=4.0
+        ):
             first_name = state.identity.name.split()[0]
             greeting = (
                 f"Thanks for calling Bayview Physical Therapy — is that "
                 f"{first_name}?"
             )
             decide(state)
+    except asyncio.TimeoutError:
+        logger.warning("Caller ID preload timed out — opening with generic greeting.")
     except Exception as exc:  # noqa: BLE001 - never block a call on a lookup
         logger.warning(f"Caller ID preload failed: {exc}")
 
@@ -241,15 +251,24 @@ async def run_call(
                     # truncates the agent mid-sentence (its first reply came out
                     # as the single word "I want"). Higher thresholds and a
                     # longer stop window make it wait for an actual pause.
-                    # stop_secs stays at the 0.2 default: pipecat's turn
-                    # analyzer calibrates against it, and raising it to 0.8
-                    # collapsed the STT wait timeout to 0 and broke turn
-                    # detection. Only the noise thresholds are nudged up.
+                    # Tuned against real calls, not defaults.
+                    #
+                    # stop_secs=0.2 (pipecat's default) chopped callers into
+                    # sub-half-second fragments — VAD start/stop every ~350ms —
+                    # and every fragment restarted the turn, so Deepgram never
+                    # saw a complete utterance and returned no transcript at
+                    # all. Transcription worked at 0.7-0.8. pipecat warns that a
+                    # longer stop window degrades its turn-latency calibration;
+                    # that is a real cost and worth paying, because the
+                    # alternative is an agent that hears nothing.
+                    #
+                    # The higher confidence and min_volume keep line noise from
+                    # registering as speech, which is what caused the churn.
                     params=VADParams(
-                        confidence=0.75,
-                        start_secs=0.2,
-                        stop_secs=0.2,
-                        min_volume=0.65,
+                        confidence=0.8,
+                        start_secs=0.25,
+                        stop_secs=0.7,
+                        min_volume=0.75,
                     ),
                 )
             ),
@@ -279,7 +298,8 @@ async def run_call(
         await runner.run(worker)
     finally:
         retire(call_sid or stream_sid)
-        await medplum.aclose()
+        # medplum is process-shared — do not close it here, the next call needs
+        # its cached token.
         await http_session.close()
         logger.info(
             f"Call {call_sid} ended. next_action={state.next_action.value} "
