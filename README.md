@@ -75,6 +75,26 @@ The single most important design decision:
                  (FHIR)      (X12 270/271)    (retrieval)       (SMS)
 ```
 
+A second, independent path handles text:
+
+```
+   AgentPhone ──> FastAPI /agentphone/webhook (HMAC verified)
+                          │
+                          v
+              classify (URGENT_CONCERN first, always)
+                          │
+                          v
+                   Medplum Task  ──> /api/dashboard
+                          │
+                          v
+              email (waitlist offer, reschedule options,
+                     referral request, exit survey, confirmation)
+```
+
+Same Task resource either channel uses — a text-driven cancellation and a
+voice-flagged low-confidence domain both surface as the identical thing on
+the dashboard. The engine doesn't know or care which channel raised it.
+
 ### Why this shape
 
 **`shared/state.py` is the contract.** The voice track produces a `CallState`;
@@ -156,6 +176,51 @@ with a stranger — which is usually what the patient actually wants.
 
 ---
 
+## Text channel
+
+Outbound SMS is blocked the same way voice's SMS confirmation is — US
+carriers reject application-to-person traffic from an unregistered 10-digit
+number (Twilio error 30034), and AgentPhone hits the identical A2P 10DLC
+wall on the outbound side. **Inbound works immediately; only outbound needs
+carrier registration**, which runs days regardless of vendor. So texting in
+is real today; the reply is a Medplum `Task` plus an email, not a text back.
+
+That's not a workaround bolted onto the architecture — it's the same
+Human-In-The-Loop mechanism the confidence gate already uses ("create a
+Task, assign human review"), just triggered by a channel limitation instead
+of a confidence score.
+
+Every inbound message is classified into one of five categories, checked in
+this order — urgency always wins, even mid-conversation:
+
+| Category | Trigger | Result |
+|---|---|---|
+| `URGENT_CONCERN` | urgent / emergency / 911 / help — checked first, unconditionally, fires even for an unrecognized number | Immediate staff email, `stat` Task |
+| `CANCELLATION` | cancel | Medplum Task, exit-survey email to the patient, ranked waitlist-offer emails to the top candidates for the freed slot |
+| `RESCHEDULE_REQUEST` | reschedule / change | Task, available-times email |
+| `CONFIRMATION` | confirm / yes / y | Task, confirmation-ack email |
+| `GENERAL_INQUIRY` | fallback | Task only |
+
+Waitlist ranking is a second scoring function (`engine/patient_score.py`),
+deliberately separate from slot scoring above — that one ranks *slots* for
+one call, this one ranks *patients* continuously across calls, on severity,
+insurance friction, distance, specialty match, availability, and history.
+Same "reward function, not a learned policy" honesty applies here too.
+
+A Stedi eligibility result requiring a referral with none on file also
+triggers an outbound email directly — not text-driven, since a patient
+doesn't text in their own eligibility check.
+
+50 tests cover this path, including a live end-to-end run against the real
+AgentPhone webhook (signature verification, classification, Task creation,
+email delivery) and a deliberate resilience property: a failed email to one
+waitlist candidate does not cost every other candidate their shot at the
+slot, and a downstream failure anywhere in this path returns `200` to
+AgentPhone rather than `500` — SMS webhooks are fire-and-forget and a
+non-200 risks a retry storm.
+
+---
+
 ## FHIR resources written
 
 One phone call, eight resources. This is the artifact that separates Relay from
@@ -185,6 +250,7 @@ an AI receptionist.
 | Records + scheduling | Medplum (FHIR R4) |
 | Eligibility | Stedi (X12 270/271) |
 | Retrieval | Moss (Rust/WASM session index, in-process) |
+| Text channel | AgentPhone (inbound SMS/iMessage), generic SMTP for outbound (Gmail App Password, SendGrid, or Mailgun relay — env var swap only) |
 | Surface | FastAPI + zero-build HTML dashboard |
 
 Medplum `Schedule`/`Slot` resources are the scheduling source of truth rather
@@ -231,8 +297,11 @@ What is real, and what is not:
 | Caller ID matching | **Working.** Resolves a returning patient before she speaks. |
 | Medplum write-back | **Working.** Real appointments, real resources. |
 | Stedi eligibility | **Working.** Correct endpoint and auth; genuine X12 271 responses. Replays a captured real response during the demo so a mis-heard member ID cannot break the flow. |
-| SMS confirmation | **Blocked.** Code works; US carriers reject unregistered A2P 10DLC traffic (error 30034). Registration takes days. |
+| SMS confirmation (voice) | **Blocked.** Code works; US carriers reject unregistered A2P 10DLC traffic (error 30034). Registration takes days. |
 | Moss retrieval | **Working.** Live session index. Measured median **4.8ms**, p95 7.8ms over 50 queries — genuinely sub-10ms, so the prior episode lands mid-sentence with no perceptible pause. Falls back to a local keyword index if credentials are absent. |
+| Text-channel inbound (AgentPhone) | **Working, live-verified.** Signature-verified webhook, 5-category classification, real Medplum Task on every message. Same A2P 10DLC wall blocks outbound text — replies go out as Task + email, not a text back. |
+| Waitlist backfill on cancellation | **Working.** Second scoring function ranks candidates; top matches get emailed automatically when a slot frees up. Not on the roadmap — built and tested. |
+| Reschedule / referral / urgent-escalation automation | **Working.** Reschedule options, referral-required reminders (Stedi-triggered), and staff urgent-alerts all fire as real emails, all resilience-tested against a mid-batch failure. |
 
 Nothing here was trained today. The scoring function is hand-written, and it is
 described as a reward function precisely because that is what it would become.
@@ -241,8 +310,12 @@ described as a reward function precisely because that is what it would become.
 
 ## What is next
 
-- Waitlist backfill when a slot cancels — the scoring function already ranks
-  candidates
+- Real outbound text once A2P 10DLC registration clears — swap Task+email
+  back for a direct reply, no other code changes needed on either channel
+- Deriving email/appointment details from the real Medplum `Patient`
+  resource instead of fixture data (email lives under `telecom`, an
+  appointment is a separate resource — that translation wasn't in scope for
+  the time left)
 - Outbound follow-up calls after a missed appointment
 - No-show prediction feeding the urgency term
 - Travel time and clinic utilisation as scoring signals
